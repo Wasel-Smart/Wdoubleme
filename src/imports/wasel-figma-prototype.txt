@@ -1,0 +1,547 @@
+Project: Wasel | واصل — Integrated Carpooling & Package Delivery Platform
+Version: 7.0 (Single-Brand Strategy)
+Objective: Generate a fully functional, high-fidelity Figma prototype aligned with BlaBlaCar carpooling model, featuring single-brand identity with integrated package delivery, cultural intelligence, advance booking flows, and modern UI/UX system.
+
+---
+
+🎯 BUSINESS MODEL CONTEXT:
+
+**FROM (v6.0 - DEPRECATED):**
+❌ Dual-brand strategy (Wasel + Awasel)
+❌ Separate package delivery app/tab
+❌ Two distinct identities
+
+**TO (v7.0 - CURRENT):**
+✅ Single brand: Wasel | واصل
+✅ Package delivery as integrated feature
+✅ One cohesive platform
+✅ Simpler marketing and user experience
+
+---
+
+1️⃣ **BRANDING — SINGLE BRAND STRATEGY**
+
+**Brand: Wasel | واصل (One Platform, Multiple Services)**
+- Mission: "Share the Journey, Share the Cost" / "شارك الرحلة، وفّر المصاري"
+- Primary color: #04ADBF (teal) — trust, journey, unity
+- Secondary color: #D9965B (warm bronze) — for package delivery feature accent
+- Target: Everyone (travelers, passengers, package senders, students, families)
+- Services: Carpooling + Package Delivery (integrated features)
+
+**Design System:**
+- Background: #0B1120 (deep navy) — dark-first
+- Cards: #111B2E with glassmorphism
+- Primary CTA: #04ADBF (teal)
+- Package feature accent: #D9965B (bronze) — used for package-related buttons/badges
+- Success: #10B981 (green)
+- Error: #EF4444 (red)
+- Typography: Tajawal (Arabic), Inter (English) — bilingual
+- Tone: Friendly, culturally-aware, trustworthy, simple
+- Currency: JOD (Jordanian Dinar)
+
+**Design Tokens:**
+- All colors, spacing, typography must come from `/tokens/wasel-tokens.ts`
+- Use CSS variables in `/styles/globals.css`
+- NO hardcoded values (enables theme switching)
+
+**Single Brand Benefits:**
+- ✅ Simpler marketing (one name to remember)
+- ✅ Reduced user confusion (one app, not two)
+- ✅ Lower development costs (one codebase)
+- ✅ Unified brand experience
+- ✅ Easier to explain ("Wasel does rides + packages")
+
+---
+
+2️⃣ **PLATFORM ARCHITECTURE (SIMPLIFIED MICROSERVICES)**
+
+**8 Core Services (NOT 12):**
+
+┌─────────────────────────────────────────────────────────────┐
+│                    API GATEWAY (Hono)                        │
+│              Supabase Edge Functions                         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+┌───────▼────────┐   ┌────────▼────────┐   ┌──────▼──────┐
+│  User Service  │   │  Trip Service   │   │   Package   │
+│                │   │   (Wasel)       │   │   Service   │
+│ • Auth         │   │                 │   │  (Awasel)   │
+│ • Profile      │   │ • Post rides    │   │             │
+│ • Verification │   │ • Search rides  │   │ • Send pkg  │
+│ • Trust score  │   │ • Book seats    │   │ • Accept pkg│
+│ • Gender prefs │   │ • Trip details  │   │ • QR verify │
+└────────────────┘   └─────────────────┘   └─────────────┘
+        │                     │                     │
+        └─────────────────────┼─────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+┌───────▼────────┐   ┌────────▼────────┐   ┌──────▼──────┐
+│ Recommendation │   │   Analytics     │   │  Payment    │
+│    Engine      │   │   Service       │   │  Service    │
+│                │   │                 │   │             │
+│ • Route demand │   │ • Liquidity KPI │   │ • Fixed 12% │
+│ • Raje3 return │   │ • Seat util.    │   │ • Payouts   │
+│ • Pkg matching │   │ • Route perf.   │   │ • COA       │
+└────────────────┘   └─────────────────┘   └─────────────┘
+        │                     │                     │
+        └─────────────────────┼─────────────────────┘
+                              │
+                  ┌───────────▼───────────┐
+                  │   Cultural Service    │
+                  │                       │
+                  │ • Prayer times        │
+                  │ • Gender filtering    │
+                  │ • Ramadan mode        │
+                  │ • Mosque directory    │
+                  └───────────────────────┘
+
+**Architecture Principles:**
+- Advance booking (NOT real-time matching)
+- Recommendations (NOT automatic assignment)
+- User always in control (NOT algorithmic dispatch)
+- Fixed pricing (NOT dynamic surge)
+- Trust-based community (ratings, verification)
+
+---
+
+3️⃣ **DATABASE SCHEMA (POSTGRESQL)**
+
+**Core Tables:**
+
+[Users] ──────────┐
+│ • id            │
+│ • email         │
+│ • full_name     │
+│ • gender        │◄─────┐
+│ • trust_score   │      │
+│ • verified      │      │
+└─────────────────┘      │
+                         │
+[Trips] ─────────────┐   │
+│ • id              │   │
+│ • traveler_id     │───┘
+│ • origin_city_id  │───┐
+│ • dest_city_id    │   │
+│ • departure_date  │   │
+│ • departure_time  │   │
+│ • total_seats     │   │
+│ • available_seats │   │
+│ • price_per_seat  │   │
+│ • gender_pref     │   │
+│ • prayer_stops    │   │
+│ • trip_status     │   │
+└───────────────────┘   │
+        │               │
+        ├───────────┐   │
+        │           │   │
+[Bookings]        [Packages]
+│ • id            │ • id
+│ • trip_id       │ • trip_id
+│ • passenger_id  │ • sender_id
+│ • seats_reserved│ • weight_kg
+│ • total_price   │ • delivery_price
+│ • booking_status│ • pickup_qr_code
+│ • payment_status│ • delivery_qr_code
+└─────────────────┘ • package_status
+                    └─────────────────┘
+        │                     │
+        └──────────┬──────────┘
+                   │
+              [Payments]
+              │ • booking_id
+              │ • package_id
+              │ • amount
+              │ • commission (12% or 20%)
+              │ • payment_method
+              └──────────────────
+
+[Cities]──────────────┐    [Routes]────────────┐
+│ • name_en          │    │ • origin_city_id   │
+│ • name_ar          │◄───┤ • dest_city_id     │
+│ • country_code     │    │ • distance_km      │
+│ • lat, lng         │    │ • demand_score     │
+└────────────────────┘    └────────────────────┘
+
+[Ratings]─────────────┐    [Prayer Stops]──────┐
+│ • trip_id          │    │ • name_ar, name_en │
+│ • reviewer_id      │    │ • route_id         │
+│ • reviewee_id      │    │ • lat, lng         │
+│ • rating (1-5)     │    │ • facilities[]     │
+│ • comment          │    └────────────────────┘
+└────────────────────┘
+
+**Mock Data for Prototype:**
+- 5 cities: Amman, Aqaba, Irbid, Dead Sea, Zarqa
+- 10 users: 5 travelers, 5 passengers
+- 8 trips: 4 Wasel (rides), 4 with packages available
+- 5 packages: pending, accepted, in-transit states
+- 12 bookings: upcoming, active, completed
+- 3 routes: Amman↔Aqaba, Amman↔Irbid, Amman↔Dead Sea
+
+---
+
+4️⃣ **UI/UX FLOWS (USER JOURNEYS)**
+
+**Journey 1: PASSENGER (Booking a Ride)**
+1. Home Screen → "Search Rides" (Wasel brand)
+2. Search Form:
+   - Origin: Amman (autocomplete)
+   - Destination: Aqaba (autocomplete)
+   - Date: March 15 (calendar picker)
+   - Filters: Gender preference, Prayer stops, Seats needed
+3. Search Results (sorted by relevance):
+   - Trip Card: Photo, Name, Rating (4.8★), Price (JOD 10), Seats (2/3)
+   - Gender badge: "Women-only 🚺" or "Mixed"
+   - Prayer stops badge: "2 prayer stops 🕌"
+4. Trip Details Modal:
+   - Traveler profile (trust score, verified badge)
+   - Vehicle info
+   - Route map with prayer stops
+   - Transparent pricing breakdown
+   - "Book Seats" CTA
+5. Booking Confirmation:
+   - Select seats (1-3)
+   - Payment method (card or Cash on Arrival)
+   - Trip summary
+   - Confirm booking → Success toast
+6. My Trips Dashboard:
+   - Upcoming trip card (countdown timer)
+   - Driver contact (masked until 24h before)
+   - Share trip (emergency contact)
+7. Post-Trip:
+   - Rate traveler (1-5 stars)
+   - Write review (optional)
+   - Refer friends (earn JOD 2)
+
+**Journey 2: TRAVELER (Posting a Ride + Raje3)**
+1. Home Screen → "Post Ride" (Wasel brand)
+2. Post Ride Form:
+   - Route: Amman → Aqaba
+   - Date & Time: March 15, 8:00 AM
+   - Seats available: 3
+   - Price calculator: Auto-fill JOD 10/seat (based on distance)
+   - Gender preference: Mixed / Women-only / Men-only / Family
+   - Prayer stops: Toggle ON (auto-calculate)
+   - Allow packages: Toggle ON
+3. Preview & Publish:
+   - Review trip details
+   - Publish → Success toast
+4. Recommendation Widget (Raje3):
+   - 🔥 "8 passengers waiting for Aqaba → Amman (return trip)"
+   - "Earn JOD 30 on your return"
+   - CTA: "Post Return Trip" (pre-filled form)
+5. Traveler Dashboard:
+   - Active trip: 3 bookings (passengers' names, photos)
+   - Package opportunities: "2 packages waiting (earn JOD 8)"
+   - Accept/Decline packages
+6. Trip Day:
+   - QR scanner (verify passenger pickup)
+   - GPS tracking (optional)
+   - In-trip chat
+7. Post-Trip:
+   - Rate passengers (1-5 stars)
+   - View earnings: JOD 30 (rides) + JOD 8 (packages) - JOD 4.56 (commission) = JOD 33.44
+   - Payout to bank (weekly)
+
+**Journey 3: SENDER (Sending a Package via Awasel)**
+1. Home Screen → "Send Package" (Awasel brand)
+2. Send Package Form:
+   - Route: Amman → Aqaba
+   - Weight: 2 kg (slider)
+   - Dimensions: 30×20×15 cm
+   - Description: "Books"
+   - Receiver: Name + Phone
+   - Delivery price: JOD 5 (suggested)
+   - Insurance: Toggle ON (+JOD 0.50)
+3. Browse Available Trips:
+   - Show travelers going Amman → Aqaba
+   - Trip Card: Date, Time, Traveler rating, "Accept Package" CTA
+4. Package Accepted:
+   - Notification: "Ahmad accepted your package"
+   - QR code generated (pickup)
+5. Pickup Day:
+   - Traveler scans QR code → Package "in transit"
+   - GPS tracking (live location)
+6. Delivery:
+   - Receiver shows QR code
+   - Traveler scans → Package "delivered"
+   - Payment released (JOD 4 to traveler, JOD 1 commission)
+7. Post-Delivery:
+   - Rate traveler (1-5 stars)
+   - File insurance claim (if damaged)
+
+---
+
+5️⃣ **SMART RECOMMENDATIONS (NOT AUTO-MATCHING)**
+
+**Recommendation Widget (Homepage):**
+
+┌─────────────────────────────────────────────────┐
+│  🔥 High Demand Routes (This Week)              │
+├─────────────────────────────────────────────────┤
+│  1. Amman → Aqaba (Friday)                      │
+│     • 12 passengers waiting                     │
+│     • 4 packages pending                        │
+│     • Earn up to JOD 40                         │
+│     [Post Ride →]                               │
+├─────────────────────────────────────────────────┤
+│  2. Amman → Irbid (Daily)                       │
+│     • 8 passengers waiting                      │
+│     • High demand 🔥                            │
+│     • Earn up to JOD 15                         │
+│     [Post Ride →]                               │
+└─────────────────────────────────────────────────┘
+
+**Raje3 Return Trip Widget (After Posting Trip):**
+
+┌─────────────────────────────────────────────────┐
+│  ↩️ Maximize Your Earnings (Return Trip)        │
+├─────────────────────────────────────────────────┤
+│  You posted: Amman → Aqaba (Fri, 8:00 AM)       │
+│                                                  │
+│  🎯 Return demand: Aqaba → Amman (Fri, 6:00 PM) │
+│     • 5 passengers waiting                      │
+│     • 2 packages pending                        │
+│     • Earn JOD 25 on your return                │
+│                                                  │
+│  [Post Return Trip →]   [Maybe Later]           │
+└─────────────────────────────────────────────────┘
+
+**Package Opportunities (Traveler Dashboard):**
+
+┌─────────────────────────────────────────────────┐
+│  📦 Package Delivery Opportunities               │
+├─────────────────────────────────────────────────┤
+│  Your trip: Amman → Aqaba (March 15)            │
+│                                                  │
+│  Available packages:                            │
+│  • Books (2 kg) — JOD 4 (earn after commission) │
+│  • Clothes (3 kg) — JOD 5                       │
+│                                                  │
+│  [View Packages →]                              │
+└─────────────────────────────────────────────────┘
+
+**Scoring Display (Subtle KPI Badges):**
+- Demand Score: 🔥🔥🔥 (85%)
+- Route Popularity: ⭐⭐⭐⭐ (4.2/5)
+- Earnings Potential: 💰💰💰 (High)
+
+---
+
+6️⃣ **PROTOTYPE INTERACTIONS**
+
+**Navigation:**
+- Sidebar (collapsible):
+  - Home
+  - Search Rides (Wasel)
+  - Post Ride (Wasel)
+  - Send Package (Awasel)
+  - My Trips
+  - My Packages
+  - Dashboard (Analytics)
+  - Profile
+  - Settings
+  - Help & Support
+
+**Interactions:**
+- ✅ Clickable navigation (all pages linked)
+- ✅ Hover states (buttons, cards)
+- ✅ Smooth transitions (fade, slide)
+- ✅ Modals (trip details, booking confirmation)
+- ✅ Dropdowns (filters, date picker)
+- ✅ Toggle switches (gender prefs, prayer stops, Ramadan mode)
+- ✅ Progress indicators (booking flow, package tracking)
+- ✅ Toast notifications (success, error, info)
+- ✅ Loading skeletons (while fetching data)
+- ✅ Empty states (no trips found, no packages)
+
+**Micro-Interactions:**
+- Button hover: Scale 1.02, shadow increase
+- Card hover: Lift effect (translate -4px)
+- Active trip: Pulsing badge
+- New notification: Red dot + bounce animation
+- Price breakdown: Accordion expand/collapse
+
+---
+
+7️⃣ **CULTURAL LAYER (COMPETITIVE ADVANTAGE)**
+
+**Prayer Time Integration:**
+┌─────────────────────────────────────────────────┐
+│  🕌 Prayer Stops Included                       │
+├─────────────────────────────────────────────────┤
+│  Departure: 2:00 PM (Amman)                     │
+│                                                  │
+│  Prayer stops:                                  │
+│  • Asr: 3:30 PM — Ma'an Grand Mosque (20 min)   │
+│  • Maghrib: 5:45 PM — Wadi Musa Mosque (15 min) │
+│                                                  │
+│  Estimated arrival: 6:35 PM (includes stops)    │
+└─────────────────────────────────────────────────┘
+
+**Gender Preference Filter:**
+[ ] Mixed (default)
+[ ] Women-only 🚺
+[ ] Men-only 🚹
+[ ] Family-only 👨‍👩‍👧‍👦
+
+**Ramadan Mode (Toggle in Settings):**
+When enabled:
+- Iftar-timed rides (arrive before sunset badge)
+- No food/drinks warning
+- 10% discount on all rides
+- Taraweeh prayer stop suggestions
+
+**Hijab Privacy (Settings):**
+[ ] Hide profile photo (show avatar icon)
+[ ] Use nickname instead of full name
+[ ] Women-only profile view
+[ ] Mask phone number until booking confirmed
+
+---
+
+8️⃣ **ANALYTICS & KPIs (DASHBOARD)**
+
+**Liquidity Health:**
+┌─────────────────────────────────────────────────┐
+│  📊 Platform Health (This Week)                 │
+├─────────────────────────────────────────────────┤
+│  Booking Success Rate:    ████████░░  78%       │
+│  Average Seat Fill:       ██████░░░░  2.3/3     │
+│  Package Match Rate:      ██████░░░░  62%       │
+│  Return Trip Adoption:    ████░░░░░░  35%       │
+└─────────────────────────────────────────────────┘
+
+**Top Routes (Bar Chart):**
+Amman → Aqaba     ████████████████████ 45 trips
+Amman → Irbid     ██████████████████ 38 trips
+Amman → Dead Sea  ████████████ 22 trips
+
+**Seat Utilization (Pie Chart):**
+- 3 seats filled: 42%
+- 2 seats filled: 35%
+- 1 seat filled: 18%
+- Empty trip: 5%
+
+**Revenue Breakdown (Donut Chart):**
+- Carpooling: 50% (JOD 1,250)
+- Packages: 30% (JOD 750)
+- Insurance: 5% (JOD 125)
+- Premium: 15% (JOD 375)
+
+**User Growth (Line Chart):**
+Week 1: 50 users
+Week 2: 78 users
+Week 3: 120 users
+Week 4: 180 users
+📈 +35% MoM
+
+**Key Metrics Cards:**
+┌─────────────┬─────────────┬─────────────┬─────────────┐
+│ Travelers   │ Passengers  │ Packages    │ Revenue     │
+│ 1,234       │ 8,901       │ 456         │ JOD 12,500  │
+│ +12% ↑     │ +28% ↑     │ +45% ↑     │ +35% ↑     │
+└─────────────┴─────────────┴─────────────┴─────────────┘
+
+---
+
+9️⃣ **DESIGN SYSTEM (REUSABLE COMPONENTS)**
+
+**Components Library:**
+
+1. **Buttons:**
+   - Primary (CTA): #04ADBF, rounded-lg
+   - Secondary: outline, hover state
+   - Ghost: transparent, text only
+   - Icon button: square, icon-only
+
+2. **Cards:**
+   - Trip Card: Photo, name, rating, price, seats, badges
+   - Package Card: Weight, dimensions, price, status
+   - Stat Card: Icon, metric, change percentage
+   - Glass Card: Glassmorphism, backdrop-blur
+
+3. **Forms:**
+   - Input: Border, focus ring, error state
+   - Select: Dropdown, searchable (cities)
+   - Date Picker: Calendar view
+   - Toggle: Switch for boolean settings
+   - Slider: Range input (weight, price)
+
+4. **Navigation:**
+   - Sidebar: Collapsible, icon + label
+   - Tab Bar: Mobile bottom navigation
+   - Breadcrumbs: Page hierarchy
+
+5. **Feedback:**
+   - Toast: Success, error, info, warning
+   - Modal: Overlay, close button
+   - Alert Dialog: Confirm/cancel actions
+   - Progress Bar: Loading, percentage
+   - Badge: Status, count, feature flag
+
+6. **Data Display:**
+   - Table: Sortable, paginated
+   - Chart: Bar, line, pie, donut
+   - Avatar: User photo, fallback initial
+   - Rating: Star display (1-5)
+   - Timeline: Trip progress, package tracking
+
+**Naming Convention:**
+- Component: PascalCase (TripCard, BookingModal)
+- Variants: snake_case (primary, secondary, ghost)
+- States: is_active, is_loading, has_error
+
+**Auto-Layout:**
+- All frames use Figma auto-layout
+- Responsive breakpoints: Mobile (375px), Tablet (768px), Desktop (1440px)
+- Grid system: 12 columns, 24px gutter
+
+---
+
+🎯 **DELIVERABLE CHECKLIST:**
+
+✅ High-fidelity, interactive Figma prototype
+✅ Single-brand identity (Wasel) with integrated package delivery
+✅ 8 microservices architecture diagram (simplified, NOT 12)
+✅ Database schema with relationships + mock data
+✅ 3 complete user journeys (passenger, traveler, sender)
+✅ Advance booking flow (NOT real-time matching)
+✅ Fixed pricing calculator (NO surge pricing)
+✅ Raje3 return trip recommendation widget
+✅ Package delivery flow with QR verification
+✅ Cultural features (prayer stops, gender prefs, Ramadan mode, hijab privacy)
+✅ Analytics dashboard with KPIs (liquidity, growth, revenue)
+✅ Design system with 50+ reusable components
+✅ Responsive layouts (mobile, tablet, desktop)
+✅ Dark mode (primary) + light mode support
+✅ Bilingual UI (Arabic RTL + English LTR)
+✅ Ready for dev handoff (component naming, auto-layout)
+
+---
+
+🚀 **PROTOTYPE GOALS:**
+
+1. **Validate BlaBlaCar Model:** Advance booking, cost-sharing, regular travelers
+2. **Test Cultural Features:** Prayer stops, gender preferences (unique to Middle East)
+3. **Demonstrate Awasel:** Package delivery monetization (trunk space)
+4. **Prove Simplicity:** User-controlled booking (NOT algorithmic matching)
+5. **Show Intelligence:** Smart recommendations (WITHOUT automation)
+
+---
+
+📝 **FINAL NOTES:**
+
+- This is NOT an Uber/Careem competitor — emphasize carpooling vs ride-hailing
+- Fixed pricing is a feature, not a limitation — builds trust
+- Cultural intelligence is our competitive advantage — not an afterthought
+- Awasel (packages) is our unique innovation — monetize empty space
+- Raje3 (return trips) reduces empty journeys — increases earnings by 40%
+
+**Version:** 7.0 (Aligned with Unified Architecture v4.0)
+**Status:** Ready for Figma prototype creation
+**Target:** Soft beta launch (50 travelers, 500 passengers)
+**Market:** Jordan (Amman, Aqaba, Irbid routes)

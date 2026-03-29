@@ -1,0 +1,13 @@
+export const NOTIFICATION_SOUND_BASE64 = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyBzvLZiTYIGWi77eeeTRAMT6fj8LZjHAY4ktfyzHksBSR3x/DdkEAKFF607OunVRQKRp/g8r5sIQUsgs/y2Ik2CBlou+3nnk0QDE+n4/C2YxwGOJLX8sx5LAUkd8fw3ZBAChRftOzrp1UUCkaf4PK+bCEFLILP8tiJNggZaLvt555NEAxPp+PwtmMcBjiS1/LMeSwFJHfH8N2QQAoUX7Ts66dVFApGn+DyvmwhBSyCz/LYiTYIGWi77eeeTRAMT6fj8LZjHAY4ktfyzHksBSR3x/DdkEAKFF+07OunVRQKRp/g8r5sIQUsgs/y2Ik2CBlou+3nnk0QDE+n4/C2YxwGOJLX8sx5LAUkd8fw3ZBAChRftOzrp1UUCkaf4PK+bCEFLILP8tiJNggZaLvt555NEAxPp+PwtmMcBjiS1/LMeSwFJHfH8N2QQAoUX7Ts66dVFApGn+DyvmwhBSyCz/LYiTYIGWi77eeeTRAMT6fj8LZjHAY4ktfyzHksBSR3x/DdkEAKFF+07OunVRQKRp/g8r5sIQUsgs/y2Ik2CBlou+3nnk0QDE+n4/C2YxwGOJLX8sx5LAUkd8fw3ZBAChRftOzrp1UUCkaf4PK+bCEFLILP8tiJNggZaLvt555NEAxPp+PwtmMcBjiS1/LMeSwFJHfH8N2QQAoUX7Ts66dVFApGn+DyvmwhBSyCz/LYiTYIGWi77eeeTRAMT6fj8LZjHAY4ktfyzHksBSR3x/DdkEAKFF+07OunVRQKRp/g8r5sIQUsgs/y2Ik2CBlou+3nnk0QDE+n4/C2YxwGOJLX8sx5LAUkd8fw3ZBAChRftOzrp1UUCkaf4PK+bCEFLILP8tiJNggZaLvt555NEAxPp+PwtmMcBjiS1/LMeSwFJHfH8N2QQAoUX7Ts66dVFApGn+DyvmwhBSyCz/LYiTYIGWi77eeeTRAMT6fj8LZjHAY4ktfyzHksBSR3x/DdkEAKFF+07OunVRQKRp/g8r5sIQU=';
+
+export const playNotificationSound = () => {
+  try {
+    const audio = new Audio(NOTIFICATION_SOUND_BASE64);
+    audio.volume = 0.3;
+    audio.play().catch(() => {
+      // Silently fail if autoplay is blocked
+    });
+  } catch (e) {
+    // Ignore errors
+  }
+};

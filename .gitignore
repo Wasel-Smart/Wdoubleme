@@ -1,0 +1,48 @@
+# ── Build output ──────────────────────────────────────────────
+build/
+dist/
+.vite/
+
+# ── Dependencies ───────────────────────────────────────────────
+node_modules/
+
+# ── Environment variables (NEVER commit these) ─────────────────
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+
+# ── Test output ────────────────────────────────────────────────
+coverage/
+test-results/
+playwright-report/
+
+# ── OS junk ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ───────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Editor artifacts ───────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.user
+
+# ── Firebase / Google native config (not needed for web) ───────
+src/GoogleService-Info.plist
+src/google-services.json
+src/imports/google-services.json
+
+# ── Cleanup backup (safe to delete after review) ───────────────
+_REMOVED/

@@ -1,0 +1,352 @@
+FIGMA AI AGENT — WASSEL FUTURISTIC BRAND + LANDING PAGE REINVENTION
+
+Objective:
+Redesign the **Wasel | واصل brand identity and landing page** using radical, futuristic, and highly innovative ideas.
+
+The result should feel like:
+
+• a category-defining startup
+• a national mobility infrastructure platform
+• something never seen before in mobility UX
+
+The landing page should feel like a **product experience**, not just a website.
+
+Think:
+
+Apple product reveal
+Tesla launch page
+Stripe interactive storytelling
+
+But adapted for a **Middle Eastern smart mobility ecosystem**.
+
+---
+
+CORE CONCEPT
+
+Wasel is not just a ride-sharing app.
+
+Wasel is a **living mobility network** connecting cities, people, and packages.
+
+Visual metaphor:
+
+A **dynamic transportation organism** where routes behave like **neural pathways** connecting cities.
+
+Passengers and packages move through this network.
+
+Design the brand to reflect:
+
+movement
+intelligence
+connection
+flow
+emergent networks
+
+---
+
+RADICAL LOGO IDEAS (REPLACE CURRENT LOGO)
+
+Create a **symbolic logo system**, not just a graphic.
+
+Avoid traditional logos.
+
+Create something that could become **iconic globally**.
+
+Possible directions:
+
+1 — THE MOBILITY CONSTELLATION
+
+Cities are nodes in a constellation.
+
+The logo forms a **dynamic star-network** where lines connect nodes forming a subtle **W shape**.
+
+Symbol meaning:
+
+cities connected by intelligent movement.
+
+---
+
+2 — THE LIVING ROUTE
+
+Design a **single continuous path line** that loops and folds to create:
+
+W + infinity symbol.
+
+This represents:
+
+continuous travel
+Wasel → Raje3 trips
+flowing mobility
+
+---
+
+3 — THE DIGITAL COMPASS
+
+A minimal circular compass.
+
+But instead of directions:
+
+dynamic route vectors.
+
+Symbolizing:
+
+navigation
+movement
+arrival
+
+---
+
+4 — THE MOBILITY NEURAL NETWORK
+
+A node-based logo inspired by brain neural maps.
+
+Symbolizing:
+
+smart routing
+AI matching
+city intelligence
+
+---
+
+LOGO REQUIREMENTS
+
+The logo must work as:
+
+• app icon
+• favicon
+• splash screen
+• billboard
+• UI symbol
+
+Deliver variations:
+
+Primary logo
+Animated logo
+App icon
+Dark mode
+Light mode
+Minimal icon mark
+
+The logo must feel like **a symbol of movement itself**.
+
+---
+
+LANDING PAGE — BREAK THE TRADITIONAL STRUCTURE
+
+Do not design a normal page.
+
+Design an **interactive mobility story**.
+
+---
+
+SECTION 1 — IMMERSIVE HERO
+
+Full-screen animated experience.
+
+Background:
+
+Animated map of Jordan.
+
+City nodes connected by moving light routes.
+
+Cars and package icons move along routes.
+
+Headline appears dynamically:
+
+"Movement connects everything."
+
+Subheadline:
+
+Wasel is the intelligent network moving people and packages between cities.
+
+CTA:
+
+Enter the network.
+
+---
+
+SECTION 2 — THE PROBLEM (STORY MODE)
+
+Instead of text blocks:
+
+Use **interactive storytelling**.
+
+Scrolling reveals:
+
+Empty cars driving between cities
+Expensive taxis
+Slow delivery services
+
+Overlay message:
+
+Mobility is broken.
+
+---
+
+SECTION 3 — THE BREAKTHROUGH
+
+Transition animation.
+
+Routes light up across the map.
+
+Headline:
+
+"What if every trip carried more?"
+
+Introduce Wasel.
+
+---
+
+SECTION 4 — THE NETWORK
+
+Show the platform as a **living system**.
+
+Animated nodes representing cities.
+
+Lines represent trips.
+
+Passengers and packages travel together.
+
+Interactive map visualization.
+
+---
+
+SECTION 5 — HOW IT WORKS
+
+Design as a **visual flow diagram**.
+
+Step 1 — Choose destination
+
+Step 2 — Intelligent matching
+
+Step 3 — Shared trip for people and packages
+
+Use animated line flow.
+
+---
+
+SECTION 6 — PRODUCT EXPERIENCE
+
+Show floating phone mockups.
+
+Screens include:
+
+home screen
+trip creation
+driver matching
+package delivery
+route visualization
+
+Use smooth parallax animation.
+
+---
+
+SECTION 7 — WHY THIS CHANGES EVERYTHING
+
+Show benefits using bold visual cards.
+
+Examples:
+
+Lower travel cost
+Faster deliveries
+Better resource usage
+Community-powered mobility
+
+---
+
+SECTION 8 — TRUST & SAFETY
+
+Display verification process.
+
+Use visual flow:
+
+identity verification
+driver approval
+secure payments
+
+---
+
+SECTION 9 — FUTURE VISION
+
+Show expansion.
+
+Animated network spreading across the region.
+
+Message:
+
+Today Jordan. Tomorrow the Middle East.
+
+---
+
+SECTION 10 — FINAL CALL TO ACTION
+
+Massive visual section.
+
+Headline:
+
+Join the movement.
+
+Buttons:
+
+Join Early Access
+Become a Driver
+Partner With Wasel
+
+---
+
+INTERACTION DESIGN
+
+Add subtle animations:
+
+flowing routes
+moving nodes
+scroll-triggered transitions
+interactive city network
+
+Use modern motion design principles.
+
+---
+
+DESIGN SYSTEM
+
+Create reusable components:
+
+navigation system
+feature cards
+route icons
+city node icons
+buttons
+map UI components
+
+Spacing:
+
+8px grid system.
+
+Layout:
+
+12-column responsive grid.
+
+---
+
+MOBILE EXPERIENCE
+
+The mobile version should feel like a **mini app experience**.
+
+Interactive gestures.
+
+Scrolling should feel like exploring a network.
+
+---
+
+FINAL DELIVERABLES
+
+Provide:
+
+Brand identity system
+Futuristic logo system
+Interactive landing page UI
+Mobile version
+App icon
+Motion design guidelines
+Developer-ready Figma file
+
+The final result should look like the **world’s most innovative mobility startup landing page**.

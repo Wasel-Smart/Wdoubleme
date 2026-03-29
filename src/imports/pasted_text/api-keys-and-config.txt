@@ -1,0 +1,519 @@
+ 
+			I need a methecial model and Clean Data as well, a working algorithm structure! in addition optimizing Wasel to another level please 
+
+
+
+			Client ID 235290462223-ooc9cnn6r80ruk475p88286hiepqu8b5.apps.googleusercontent.com
+
+Sanadrefee@digit-jordan.com
+
+
+
+API URL: http://127.0.0.1:54321
+GraphQL URL: http://127.0.0.1:54321/graphql/v1
+S3 Storage URL: http://127.0.0.1:54321/storage/v1/s3
+MCP URL: http://127.0.0.1:54321/mcp
+Database URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+Studio URL: http://127.0.0.1:54323
+Mailpit URL: http://127.0.0.1:54324
+Publishable key: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+Secret key: sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz
+S3 Access Key: 625729a08b95bf1b7ff351a663f3a23c
+S3 Secret Key: 850181e4652dd023b7a98c58ae0d2d34bd487ee0cc3254aed6eda37307425907
+S3 Region: local
+
+
+REACT_APP_SUPABASE_URL=https://djccmatubyyudeosrngm.supabase.co
+REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_Iy-jArsso0ehGKQ83kuiDg_1T-cl9zE
+
+
+
+
+
+# Supabase local endpoints
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_GRAPHQL_URL=http://127.0.0.1:54321/graphql/v1
+SUPABASE_STORAGE_S3_URL=http://127.0.0.1:54321/storage/v1/s3
+SUPABASE_MCP_URL=http://127.0.0.1:54321/mcp
+
+# Local services
+STUDIO_URL=http://127.0.0.1:54323
+MAILPIT_URL=http://127.0.0.1:54324
+
+# Database
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+# Supabase keys (secrets)
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+SUPABASE_SERVICE_KEY=sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz
+
+# S3 (MinIO/local) credentials
+S3_ACCESS_KEY=625729a08b95bf1b7ff351a663f3a23c
+S3_SECRET_KEY=850181e4652dd023b7a98c58ae0d2d34bd487ee0cc3254aed6eda37307425907
+S3_REGION=local
+
+# React environment (public)
+REACT_APP_SUPABASE_URL=https://djccmatubyyudeosrngm.supabase.co
+REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_Iy-jArsso0ehGKQ83kuiDg_1T-cl9zE
+
+
+
+
+
+ Maps JavaScript API
+
+  
+235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+235290462223-ooc9cnn6r80ruk475p88286hiepqu8b5.apps.googleusercontent.com
+
+JWT Keys Standby key 341862a3-0344-4ac5-a41b-89c751c44314
+
+Publishable key mk_1SZmpLENhKSYxMCXg1aH3EHm
+Secret key mk_1SZmq6ENhKSYxMCX678o8SFC
+
+Google Maps API Key Wasel: AIzaSyBWqXeMJ-oPSDpqeR548hw3QUU0EaxE85s
+
+
+
+anon : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqY2NtYXR1Ynl5dWRlb3NybmdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNjY5MjUsImV4cCI6MjA3NzQyNjkyNX0.WlYJmK-OUKlNyp3ktcb2ShILFN1vgCumAL4tOATziTQ
+
+API : sb_publishable_Iy-jArsso0ehGKQ83kuiDg_1T-cl9zE
+
+	Stripe:   ****
+
+	Publishable key:
+	pk_test_51SZmpKENhKSYxMCXJ2TgwgNMNjUjHk5CwPQ31zWTEsokWdkD7GgaVhgU3ZPD7ti5gd6NWBvwdWcH3R0hXQCOG3QI00lTUi6x7v
+	 
+
+	 
+	Secret key:
+	sk_test_51SZmpKENhKSYxMCX03sEOKEiljDGWYTX0ZKTVmqKM0NeNH60jWc6pzyW8vaMHr7ahEKfKRNG24UqNrlsELnEGvHZ004Ec5d33u
+ 
+ 235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+ Use this key in your application by passing it with the key=API_KEY parameter.
+
+AIzaSyBWqXeMJ-oPSDpqeR548hw3QUU0EaxE85s
+
+
+235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+
+
+235290462223-ooc9cnn6r80ruk475p88286hiepqu8b5.apps.googleusercontent.com
+
+	
+ 
+ Twilio
+ console.Twilio
+ 
+ Standard keys *can not* manage API keys, account configuration, and sub accounts.
+SID
+SK4519926e3b0a4186bee07283ab57b018
+
+Secret
+LCnyYDzwgp4n9qqg7hx2nf0HRvOLnRQU
+
+Important note: This secret above is only shown once. Please make note of it and store it in a safe, secure location.
+
+
+Copy the secret
+ 
+ LCnyYDzwgp4n9qqg7hx2nf0HRvOLnRQU
+ 
+ 
+ 
+ Auth Tokens - United States (US1)
+Auth tokens can be used to authenticate while making API requests. You will need to use HTTP Basic Authentication with user=Account SID and password=AuthToken. Auth tokens are specific to your account and can be used to access all APIs for the account. Please keep the auth tokens in a secure place and rotate them periodically. Learn more about auth tokens.
+
+Live credentials
+Account SID- used to exercise the REST API
+AC1386e065d313ae43d256ca0394d0b4e6
+Auth token
+
+Request a secondary token
+Sensitive information. Store your token securely to protect your account. Learn more
+
+5005d351cb6bee711cb5127a7d192728
+Keep this somewhere safe and secure
+Test credentials
+Account SID- used to exercise the REST API
+ACce6518bf6561233fdd76c616726d9e8f
+Test Auth token
+
+6817b85c39c23aff2fe26b7df843af01
+Keep this somewhere safe and secure
+
+
+API key	Type	Date created	Actions
+Wasel
+SID: SK4519926e3b0a4186bee07283ab57b018
+
+Standard	2026-01-15T09:22:49.745Z	
+
+New publishable key
+Name	API Key	
+default
+No description
+sb_publishable_Iy-jArsso0ehGKQ83kuiDg_1T-cl9zE
+sb_publishable_Iy-jArsso0ehGKQ83kuiDg_1T-cl9zE
+
+anon public
+ 
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqY2NtYXR1Ynl5dWRlb3NybmdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNjY5MjUsImV4cCI6MjA3NzQyNjkyNX0.WlYJmK-OUKlNyp3ktcb2ShILFN1vgCumAL4tOATziTQ
+
+service_role secret
+ 
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqY2NtYXR1Ynl5dWRlb3NybmdtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjA2NjkyNSwiZXhwIjoyMDc3NDI2OTI1fQ.7_fGWjK9c8iGk36iHMqH37nBJEAdosg4G8aZSaYdWeQ
+
+
+
+Legacy JWT secret (still used)
+k0K5HhZ5Dz92N65YB5yXGyuaz5ZngAjfAH5+JO02Qt3457//xz36YslY1g8GwnUCM/a973vaPrjX3sIDw5v7Mg==
+
+ 
+  
+Standby key ECC (P-256)
+
+341862a3-0344-4ac5-a41b-89c751c44314
+ 
+
+Legacy HS256 (Shared Secret)
+
+1ad198a4-3c63-42c7-9474-42ba6eea31bc
+
+https://console.cloud.google.com/auth/overview?project=wasel14
+Client ID 
+
+AIzaSyBK3ED6sefXHHUYiLxOy5HUfjYsV-9SP40
+
+
+AIzaSyAsR3wj_kdymK5WIdPwf85fAuivF9LFbL8
+
+
+
+AIzaSyBgz7Yo3sbY8J3-w7nkV8nRZR7M1rOpLcE
+
+
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqY2NtYXR1Ynl5dWRlb3NybmdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNjY5MjUsImV4cCI6MjA3NzQyNjkyNX0.WlYJmK-OUKlNyp3ktcb2ShILFN1vgCumAL4tOATziTQ
+
+
+
+ podman ps
+CONTAINER ID  IMAGE                           COMMAND           CREATED       STATUS      PORTS                 NAMES
+01c44968199f  docker.io/library/httpd:latest  httpd-foreground  1 minute ago  Up 1 minute 0.0.0.0:8080->80/tcp  laughing_bob
+
+
+235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+235290462223-ooc9cnn6r80ruk475p88286hiepqu8b5.apps.googleusercontent.com
+
+JWT Keys Standby key 341862a3-0344-4ac5-a41b-89c751c44314
+
+Publishable key mk_1SZmpLENhKSYxMCXg1aH3EHm
+Secret key mk_1SZmq6ENhKSYxMCX678o8SFC
+
+Google Maps API Key Wasel: AIzaSyBWqXeMJ-oPSDpqeR548hw3QUU0EaxE85s
+
+
+Please fix all scrolling not responding moreover Navigation experience inside the  application Remove   all not needed components taht affect the application performance. Improve the User Navigitation experiance inside the all application to create stickness with the User not sicnkess from being lagy or lazy or not respondy or what ever. 
+
+
+
+anon : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqY2NtYXR1Ynl5dWRlb3NybmdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNjY5MjUsImV4cCI6MjA3NzQyNjkyNX0.WlYJmK-OUKlNyp3ktcb2ShILFN1vgCumAL4tOATziTQ
+
+API : sb_publishable_Iy-jArsso0ehGKQ83kuiDg_1T-cl9zE
+
+	Stripe:   ****
+
+	Publishable key:
+	pk_test_51SZmpKENhKSYxMCXJ2TgwgNMNjUjHk5CwPQ31zWTEsokWdkD7GgaVhgU3ZPD7ti5gd6NWBvwdWcH3R0hXQCOG3QI00lTUi6x7v
+	 
+
+	 
+	Secret key:
+	sk_test_51SZmpKENhKSYxMCX03sEOKEiljDGWYTX0ZKTVmqKM0NeNH60jWc6pzyW8vaMHr7ahEKfKRNG24UqNrlsELnEGvHZ004Ec5d33u
+ 
+ 235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+ Use this key in your application by passing it with the key=API_KEY parameter.
+
+AIzaSyBWqXeMJ-oPSDpqeR548hw3QUU0EaxE85s
+
+
+235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+
+
+235290462223-ooc9cnn6r80ruk475p88286hiepqu8b5.apps.googleusercontent.com
+
+	
+ 
+ Twilio
+ console.Twilio
+ 
+ Standard keys *can not* manage API keys, account configuration, and sub accounts.
+SID
+SK4519926e3b0a4186bee07283ab57b018
+
+Secret
+LCnyYDzwgp4n9qqg7hx2nf0HRvOLnRQU
+
+Important note: This secret above is only shown once. Please make note of it and store it in a safe, secure location.
+
+
+Copy the secret
+ 
+ LCnyYDzwgp4n9qqg7hx2nf0HRvOLnRQU
+ 
+ 
+ 
+ Auth Tokens - United States (US1)
+Auth tokens can be used to authenticate while making API requests. You will need to use HTTP Basic Authentication with user=Account SID and password=AuthToken. Auth tokens are specific to your account and can be used to access all APIs for the account. Please keep the auth tokens in a secure place and rotate them periodically. Learn more about auth tokens.
+
+Live credentials
+Account SID- used to exercise the REST API
+AC1386e065d313ae43d256ca0394d0b4e6
+Auth token
+
+Request a secondary token
+Sensitive information. Store your token securely to protect your account. Learn more
+
+5005d351cb6bee711cb5127a7d192728
+Keep this somewhere safe and secure
+Test credentials
+Account SID- used to exercise the REST API
+ACce6518bf6561233fdd76c616726d9e8f
+Test Auth token
+
+6817b85c39c23aff2fe26b7df843af01
+Keep this somewhere safe and secure
+
+
+API key	Type	Date created	Actions
+Wasel
+SID: SK4519926e3b0a4186bee07283ab57b018
+
+Standard	2026-01-15T09:22:49.745Z	
+
+You are a senior full-stack engin
+
+
+
+ 
+
+RULES:
+1. Output ONLY production-ready code — no pseudocode.
+2. Every file must be copy-paste ready.
+3. Use best practices for security, scalability, and maintainability.
+4. Handle edge cases (double cancellation, partial refunds, race conditions).
+5. Follow Supabase Row Level Security (RLS) best practices.
+6. Assume Stripe keys are stored securely in Supabase Secrets.
+7. Clearly separate Mobile, Web, and Backend code.
+8. Include database SQL where required.
+9. Explain NOTHING unless explicitly asked — default output is code.
+
+---
+
+## 🚨 IMPLEMENT THE FOLLOWING ROADMAP COMPLETELY
+
+### 🔐 CRITICAL INFRASTRUCTURE (Both Platforms)
+
+#### 1️⃣ Payment Backend (Supabase Edge Functions)
+- Create `supabase/functions/payment-sheet/index.ts`
+  - Generate Stripe `PaymentIntent`
+  - Return `client_secret`
+- Create `supabase/functions/refund/index.ts`
+  - Process partial & full refunds
+- Connect:
+  - Mobile `PaymentService`
+  - Web `usePayments` hook
+
+#### 2️⃣ Trip Cancellation Logic
+- Implement `cancelBooking`:
+  - Update booking status
+  - Restore seats atomically
+  - Trigger refund if paid
+- Implement `cancelTrip`:
+  - Cancel trip
+  - Notify passengers
+  - Refund all paid bookings
+
+#### 3️⃣ Ratings & Reviews
+- SQL to create `ratings` table
+- `RateDriver` modal component
+- Submit rating after trip completion
+- Update driver average rating in `profiles`
+
+#### 4️⃣ Forgot Password Flow
+- Supabase `resetPasswordForEmail`
+- Mobile screen
+- Web modal
+
+---
+
+## 📱 MOBILE TASKS
+
+### Chat Enhancements
+- "Start Chat" button
+- Push notifications with deep linking
+
+### Deep Linking
+- Configure `expo-linking`
+- Handle `wasel://trips/:id`
+
+---
+
+## 💻 WEB TASKS
+
+### Real-Time Chat
+- Port mobile chat to web
+- `/messages` route
+
+### Profile Editing
+- `EditProfileForm`
+- Avatar upload using Supabase Storage
+
+### Routing
+- Migrate to `react-router-dom`
+- URL-based navigation
+
+---
+
+## OUTPUT FORMAT:
+- Label each section clearly
+- Use fenced code blocks
+- File paths as headers
+- SQL in `.sql` blocks
+- TypeScript everywhere
+- No placeholders
+
+START WITH:
+1️⃣ Supabase Edge Functions
+2️⃣ Database schema
+3️⃣ Cancellation logic
+4️⃣ Payments integration
+5️⃣ Mobile features
+6️⃣ Web features
+
+BEGIN.
+ 
+
+ podman ps
+CONTAINER ID  IMAGE                           COMMAND           CREATED       STATUS      PORTS                 NAMES
+01c44968199f  docker.io/library/httpd:latest  httpd-foreground  1 minute ago  Up 1 minute 0.0.0.0:8080->80/tcp  laughing_bob
+
+
+235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+235290462223-ooc9cnn6r80ruk475p88286hiepqu8b5.apps.googleusercontent.com
+
+JWT Keys Standby key 341862a3-0344-4ac5-a41b-89c751c44314
+
+Publishable key mk_1SZmpLENhKSYxMCXg1aH3EHm
+Secret key mk_1SZmq6ENhKSYxMCX678o8SFC
+
+Google Maps API Key Wasel: AIzaSyBWqXeMJ-oPSDpqeR548hw3QUU0EaxE85s
+
+
+
+anon : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqY2NtYXR1Ynl5dWRlb3NybmdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNjY5MjUsImV4cCI6MjA3NzQyNjkyNX0.WlYJmK-OUKlNyp3ktcb2ShILFN1vgCumAL4tOATziTQ
+
+API : sb_publishable_Iy-jArsso0ehGKQ83kuiDg_1T-cl9zE
+
+	Stripe:    
+
+	Publishable key:
+	pk_test_51SZmpKENhKSYxMCXJ2TgwgNMNjUjHk5CwPQ31zWTEsokWdkD7GgaVhgU3ZPD7ti5gd6NWBvwdWcH3R0hXQCOG3QI00lTUi6x7v
+	 
+
+	 
+	Secret key:
+	sk_test_51SZmpKENhKSYxMCX03sEOKEiljDGWYTX0ZKTVmqKM0NeNH60jWc6pzyW8vaMHr7ahEKfKRNG24UqNrlsELnEGvHZ004Ec5d33u
+ 
+ 235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+ Use this key in your application by passing it with the key=API_KEY parameter.
+
+AIzaSyBWqXeMJ-oPSDpqeR548hw3QUU0EaxE85s
+
+
+235290462223-slmuhn0n9nvmalq3tfdt7cl5de55fcnp.apps.googleusercontent.com
+
+
+235290462223-ooc9cnn6r80ruk475p88286hiepqu8b5.apps.googleusercontent.com
+
+	
+ 
+ Twilio
+ console.Twilio
+ 
+ Standard keys *can not* manage API keys, account configuration, and sub accounts.
+SID
+SK4519926e3b0a4186bee07283ab57b018
+
+Secret
+LCnyYDzwgp4n9qqg7hx2nf0HRvOLnRQU
+
+Important note: This secret above is only shown once. Please make note of it and store it in a safe, secure location.
+
+
+Copy the secret
+ 
+ LCnyYDzwgp4n9qqg7hx2nf0HRvOLnRQU
+ 
+ 
+ 
+ Auth Tokens - United States (US1)
+Auth tokens can be used to authenticate while making API requests. You will need to use HTTP Basic Authentication with user=Account SID and password=AuthToken. Auth tokens are specific to your account and can be used to access all APIs for the account. Please keep the auth tokens in a secure place and rotate them periodically. Learn more about auth tokens.
+
+Live credentials
+Account SID- used to exercise the REST API
+AC1386e065d313ae43d256ca0394d0b4e6
+Auth token
+
+Request a secondary token
+Sensitive information. Store your token securely to protect your account. Learn more
+
+5005d351cb6bee711cb5127a7d192728
+Keep this somewhere safe and secure
+Test credentials
+Account SID- used to exercise the REST API
+ACce6518bf6561233fdd76c616726d9e8f
+Test Auth token
+
+6817b85c39c23aff2fe26b7df843af01
+Keep this somewhere safe and secure
+
+
+API key	Type	Date created	Actions
+Wasel
+SID: SK4519926e3b0a4186bee07283ab57b018
+
+Standard	2026-01-15T09:22:49.745Z	
+
+ 
+ 
+ GOOGLE
+- Maps API Key:
+- OAuth Client IDs:
+
+SUPABASE
+- Anon Key:
+- Service Role Key:
+- JWT Secret:
+
+STRIPE
+Stripe:    
+
+	Publishable key:
+	pk_test_51SZmpKENhKSYxMCXJ2TgwgNMNjUjHk5CwPQ31zWTEsokWdkD7GgaVhgU3ZPD7ti5gd6NWBvwdWcH3R0hXQCOG3QI00lTUi6x7v
+	 
+
+	 
+	Secret key:
+	sk_test_51SZmpKENhKSYxMCX03sEOKEiljDGWYTX0ZKTVmqKM0NeNH60jWc6pzyW8vaMHr7ahEKfKRNG24UqNrlsELnEGvHZ004Ec5d33u
+
+TWILIO
+- Account SID:
+- API Key SID:
+- API Secret:
+- Auth Token:
+
+
+

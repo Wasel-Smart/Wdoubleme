@@ -1,0 +1,399 @@
+/**
+ * Wasel API Client Utilities v2.0
+ * Provides centralized API endpoint configuration with:
+ * - Automatic retry logic
+ * - Request/response interceptors
+ * - Error handling
+ * - Request caching
+ * - Performance monitoring
+ */
+
+import { projectId, publicAnonKey } from './supabase/info';
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+/**
+ * Base URL for all API calls
+ * Uses the 'server' edge function with '/make-server-0b1f4071' prefix
+ */
+export const API_BASE_URL = `https://${projectId}.supabase.co/functions/v1/server/make-server-0b1f4071`;
+
+/**
+ * Request timeout (30 seconds)
+ */
+export const REQUEST_TIMEOUT = 30000;
+
+/**
+ * Retry configuration
+ */
+export const RETRY_CONFIG = {
+  maxRetries: 3,
+  retryDelay: 1000,
+  retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+};
+
+// ============================================================================
+// ERROR CLASSES
+// ============================================================================
+
+export class APIError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number = 500,
+    public code?: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'APIError';
+  }
+
+  toJSON() {
+    return {
+      error: this.message,
+      code: this.code,
+      details: this.details,
+      statusCode: this.statusCode,
+    };
+  }
+}
+
+export class NetworkError extends Error {
+  constructor(message: string = 'Network request failed') {
+    super(message);
+    this.name = 'NetworkError';
+  }
+}
+
+export class TimeoutError extends Error {
+  constructor(message: string = 'Request timeout') {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Get default headers for API requests
+ */
+export function getApiHeaders(accessToken?: string): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'X-Client-Info': 'wasel-web',
+  };
+
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  } else {
+    headers['Authorization'] = `Bearer ${publicAnonKey}`;
+  }
+
+  return headers;
+}
+
+/**
+ * Sleep utility for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Lightweight ID generator for client-side optimistic objects.
+ */
+export function generateId(prefix: string = 'id'): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Check if status code is retryable
+ */
+function isRetryable(statusCode: number): boolean {
+  return RETRY_CONFIG.retryableStatusCodes.includes(statusCode);
+}
+
+/**
+ * Fetch with timeout
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeout: number = REQUEST_TIMEOUT
+): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error: any) {
+    clearTimeout(id);
+    if (error.name === 'AbortError') {
+      throw new TimeoutError(`Request timeout after ${timeout}ms`);
+    }
+    throw error;
+  }
+}
+
+// ============================================================================
+// MAIN API REQUEST FUNCTION
+// ============================================================================
+
+/**
+ * Make an API request to the Wasel backend with automatic retry
+ */
+export async function apiRequest<T = any>(
+  endpoint: string,
+  options: RequestInit = {},
+  retries: number = RETRY_CONFIG.maxRetries
+): Promise<T> {
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetchWithTimeout(url, {
+        ...options,
+        headers: {
+          ...getApiHeaders(),
+          ...options.headers,
+        },
+      });
+
+      // Success - return data
+      if (response.ok) {
+        // Handle empty responses
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          return await response.json();
+        }
+        return {} as T;
+      }
+
+      // Error response
+      const contentType = response.headers.get('content-type');
+      let errorData: any = { error: 'Request failed' };
+      
+      if (contentType?.includes('application/json')) {
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: response.statusText };
+        }
+      } else {
+        errorData = { error: await response.text() || response.statusText };
+      }
+
+      // Check if we should retry
+      if (isRetryable(response.status) && attempt < retries) {
+        const delay = RETRY_CONFIG.retryDelay * Math.pow(2, attempt);
+        console.warn(`⚠️ Request failed (${response.status}). Retrying in ${delay}ms... (${attempt + 1}/${retries})`);
+        await sleep(delay);
+        continue;
+      }
+
+      // No more retries - throw error
+      throw new APIError(
+        errorData.error || errorData.message || `API request failed: ${response.statusText}`,
+        response.status,
+        errorData.code,
+        errorData.details
+      );
+
+    } catch (error: any) {
+      lastError = error;
+
+      // Don't retry on client errors (except timeout)
+      if (error instanceof APIError && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 429) {
+        throw error;
+      }
+
+      // Don't retry if no more attempts
+      if (attempt >= retries) {
+        break;
+      }
+
+      // Retry on network errors and timeouts
+      if (error instanceof NetworkError || error instanceof TimeoutError) {
+        const delay = RETRY_CONFIG.retryDelay * Math.pow(2, attempt);
+        console.warn(`⚠️ ${error.message}. Retrying in ${delay}ms... (${attempt + 1}/${retries})`);
+        await sleep(delay);
+        continue;
+      }
+
+      // Unknown error - don't retry
+      throw error;
+    }
+  }
+
+  // All retries exhausted
+  console.error('❌ All retry attempts exhausted');
+  throw lastError || new NetworkError('Request failed after all retries');
+}
+
+// ============================================================================
+// CONVENIENCE METHODS
+// ============================================================================
+
+/**
+ * GET request
+ */
+export async function apiGet<T = any>(
+  endpoint: string,
+  params?: Record<string, any>,
+  accessToken?: string
+): Promise<T> {
+  const queryString = params 
+    ? '?' + new URLSearchParams(
+        Object.entries(params).filter(([_, v]) => v !== undefined && v !== null) as [string, string][]
+      ).toString()
+    : '';
+
+  return apiRequest<T>(endpoint + queryString, {
+    method: 'GET',
+    headers: getApiHeaders(accessToken),
+  });
+}
+
+/**
+ * POST request
+ */
+export async function apiPost<T = any>(
+  endpoint: string,
+  body?: any,
+  accessToken?: string
+): Promise<T> {
+  return apiRequest<T>(endpoint, {
+    method: 'POST',
+    headers: getApiHeaders(accessToken),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+/**
+ * PUT request
+ */
+export async function apiPut<T = any>(
+  endpoint: string,
+  body?: any,
+  accessToken?: string
+): Promise<T> {
+  return apiRequest<T>(endpoint, {
+    method: 'PUT',
+    headers: getApiHeaders(accessToken),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+/**
+ * PATCH request
+ */
+export async function apiPatch<T = any>(
+  endpoint: string,
+  body?: any,
+  accessToken?: string
+): Promise<T> {
+  return apiRequest<T>(endpoint, {
+    method: 'PATCH',
+    headers: getApiHeaders(accessToken),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+/**
+ * DELETE request
+ */
+export async function apiDelete<T = any>(
+  endpoint: string,
+  accessToken?: string
+): Promise<T> {
+  return apiRequest<T>(endpoint, {
+    method: 'DELETE',
+    headers: getApiHeaders(accessToken),
+  });
+}
+
+// ============================================================================
+// API ENDPOINTS
+// ============================================================================
+
+/**
+ * API endpoints
+ */
+export const API_ENDPOINTS = {
+  // Auth
+  SIGNUP: '/auth/signup',
+  SIGNIN: '/auth/signin',
+  SIGNOUT: '/auth/signout',
+  
+  // Trips
+  TRIPS: '/trips',
+  MY_TRIPS: '/my-trips',
+  ACTIVE_TRIP: '/active-trip',
+  SEARCH_RIDES: '/trips/search',
+  POST_RIDE: '/rides/post',
+  BOOK_RIDE: '/rides/book',
+  RATE_RIDE: '/rides/rate',
+  
+  // Packages
+  PACKAGES: '/packages',
+  SEND_PACKAGE: '/packages/send',
+  AVAILABLE_PACKAGES: '/packages/available',
+  TRACK_PACKAGE: (id: string) => `/packages/${id}/track`,
+  
+  // Cultural
+  MOSQUES: '/cultural/mosques',
+  PRAYER_TIMES: '/cultural/prayer-times',
+  GENDER_PREFERENCES: '/cultural/gender-preferences',
+  
+  // Profile
+  PROFILE: '/profile',
+  TRUST_SCORE: '/trust-score',
+  REVIEWS: '/reviews',
+  
+  // Wallet
+  WALLET: '/wallet',
+  WALLET_BALANCE: '/wallet/balance',
+  WALLET_TRANSACTIONS: '/wallet/transactions',
+  WALLET_DEPOSIT: '/wallet/deposit',
+  WALLET_WITHDRAW: '/wallet/withdraw',
+  
+  // Community
+  COMMUNITY: '/community',
+  COMMUNITY_POSTS: '/community/posts',
+  
+  // Admin
+  ADMIN_STATS: '/admin/liquidity-stats',
+  ADMIN_SEED: '/admin/seed-data',
+  
+  // Health
+  HEALTH: '/',
+  HEALTH_DB: '/health/db',
+  HEALTH_AUTH: '/health/auth',
+  HEALTH_STORAGE: '/health/storage',
+  HEALTH_KV: '/health/kv',
+};
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export default {
+  baseUrl: API_BASE_URL,
+  get: apiGet,
+  post: apiPost,
+  put: apiPut,
+  patch: apiPatch,
+  delete: apiDelete,
+  request: apiRequest,
+  endpoints: API_ENDPOINTS,
+};

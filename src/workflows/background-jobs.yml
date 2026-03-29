@@ -1,0 +1,96 @@
+# Wasel Background Jobs - GitHub Actions Cron Scheduler
+#
+# This workflow runs scheduled background jobs for Wasel
+# since Deno.cron is not available in Supabase Edge Runtime
+#
+# Schedule:
+# - Trip reminders: Every 10 minutes
+# - Daily earnings: Daily at 8 AM Jordan time (UTC+3 = 5 AM UTC)
+# - Data cleanup: Every hour
+# - Archive trips: Daily at 2 AM Jordan time (11 PM UTC previous day)
+# - Weekly summaries: Monday at 9 AM Jordan time (6 AM UTC)
+
+name: Wasel Background Jobs
+
+on:
+  schedule:
+    # Trip reminders - every 10 minutes
+    - cron: '*/10 * * * *'
+    
+    # Daily earnings - 5 AM UTC (8 AM Jordan time)
+    - cron: '0 5 * * *'
+    
+    # Data cleanup - every hour
+    - cron: '0 * * * *'
+    
+    # Archive trips - 11 PM UTC (2 AM Jordan time)
+    - cron: '0 23 * * *'
+    
+    # Weekly summaries - Monday 6 AM UTC (9 AM Jordan time)
+    - cron: '0 6 * * 1'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Which job to run'
+        required: true
+        type: choice
+        options:
+          - all
+          - trip-reminders
+          - daily-earnings
+          - cleanup
+          - archive-trips
+          - weekly-summaries
+
+jobs:
+  trip-reminders:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '*/10 * * * *' || github.event.inputs.job == 'all' || github.event.inputs.job == 'trip-reminders'
+    steps:
+      - name: Run Trip Reminders Job
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/make-server-0b1f4071/jobs/trip-reminders
+
+  daily-earnings:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 5 * * *' || github.event.inputs.job == 'all' || github.event.inputs.job == 'daily-earnings'
+    steps:
+      - name: Run Daily Earnings Job
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/make-server-0b1f4071/jobs/daily-earnings
+
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 * * * *' || github.event.inputs.job == 'all' || github.event.inputs.job == 'cleanup'
+    steps:
+      - name: Run Data Cleanup Job
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/make-server-0b1f4071/jobs/cleanup
+
+  archive-trips:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 23 * * *' || github.event.inputs.job == 'all' || github.event.inputs.job == 'archive-trips'
+    steps:
+      - name: Run Archive Trips Job
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/make-server-0b1f4071/jobs/archive-trips
+
+  weekly-summaries:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 6 * * 1' || github.event.inputs.job == 'all' || github.event.inputs.job == 'weekly-summaries'
+    steps:
+      - name: Run Weekly Summaries Job
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/make-server-0b1f4071/jobs/weekly-summaries

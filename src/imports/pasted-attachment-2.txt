@@ -1,0 +1,235 @@
+Master Command Prompt — Build the Wasel Wallet System (Enterprise Grade)
+
+You are a Principal Fintech Architect, Backend Engineer, and Product Designer.
+
+Your task is to design and implement the complete Wallet System for the mobility platform Wasel (واصل).
+
+The platform combines:
+
+• Ride sharing
+• Package delivery
+• Driver earnings
+• User payments
+
+The wallet must reach 10/10 product quality and follow enterprise fintech architecture standards.
+
+Design the system inspired by the financial infrastructure used by:
+
+Uber Technologies
+
+Grab Holdings
+
+Gojek
+
+Core Requirements
+
+The wallet must support:
+
+User wallet balance
+Driver wallet balance
+Escrow payment system
+Instant driver payouts
+Credits and rewards system
+Subscription payments
+Ride and delivery payments
+Transaction history
+Refund management
+Multi-currency readiness
+Security and fraud protection
+
+Architecture Requirements
+
+The wallet must use a ledger-based accounting system.
+
+Balances must never be updated directly.
+
+All balance changes must occur through transaction entries.
+
+Database Architecture
+
+Design a production-grade schema.
+
+Required tables:
+
+users
+id
+name
+email
+role (user/driver/admin)
+created_at
+wallets
+id
+user_id
+wallet_type (user, driver, system)
+currency
+created_at
+wallet_balances
+wallet_id
+available_balance
+pending_balance
+updated_at
+transactions
+id
+wallet_id
+type (ride_payment, delivery_payment, topup, withdrawal, refund, reward)
+amount
+currency
+status (pending, completed, failed)
+reference_id
+created_at
+ledger_entries
+id
+transaction_id
+wallet_id
+debit
+credit
+balance_after
+created_at
+
+This ensures complete financial traceability.
+
+escrow_transactions
+id
+trip_id
+payer_wallet_id
+driver_wallet_id
+amount
+status (held, released, refunded)
+created_at
+
+Used for ride and delivery payments.
+
+payouts
+id
+driver_id
+wallet_id
+amount
+method (bank_transfer, instant)
+status
+created_at
+rewards
+id
+user_id
+reward_type (ride_credit, cashback)
+amount
+expiration_date
+created_at
+subscriptions
+id
+user_id
+plan_name
+price
+status
+start_date
+end_date
+
+Example:
+
+Wasel Plus subscription.
+
+Wallet Functional Flows
+Ride Payment Flow
+
+1 User books ride
+2 Wallet reserves amount
+3 Amount moves to escrow
+4 Trip completes
+5 Escrow releases payment to driver wallet
+6 Wasel commission deducted automatically
+
+Package Delivery Flow
+
+Same escrow model as ride payment.
+
+Driver Payout Flow
+
+Driver completes trips
+Earnings accumulate in wallet
+Driver can withdraw anytime.
+
+Security Requirements
+
+Implement:
+
+Biometric authentication
+PIN verification
+Encrypted transactions
+Fraud monitoring
+Transaction verification logs
+
+Smart Wallet Features
+
+Add intelligent features:
+
+Monthly mobility insights
+Ride spending analytics
+Driver earnings analytics
+Auto top-up option
+Wallet cashback system
+Referral reward credits
+
+User Experience Requirements
+
+The wallet interface must include:
+
+Wallet balance card
+Add money
+Withdraw
+Send money
+Transaction history
+Rewards section
+Subscription section
+
+The UI should feel premium fintech quality comparable to:
+
+Apple Wallet
+
+PayPal
+
+Revolut
+
+Performance Requirements
+
+The wallet must support:
+
+Millions of users
+High transaction throughput
+Atomic transactions
+Event-based architecture
+Horizontal scaling
+
+Deliverables
+
+Produce:
+
+1 Complete system architecture
+2 Full database schema
+3 API endpoint structure
+4 Wallet service logic
+5 Escrow payment logic
+6 Driver payout logic
+7 Reward system logic
+8 Subscription billing logic
+9 Security architecture
+10 UI/UX flow recommendations
+
+The final system must be production-ready for a large-scale mobility platform.
+
+Strategic Objective
+
+Design the wallet so it becomes the financial engine of Wasel, enabling:
+
+Ride payments
+Package delivery payments
+Driver economy
+Reward economy
+Subscription economy
+
+The wallet should create strong network effects and become one of the most valuable assets of the platform.
+
+✅ Pro tip for your AI agent:
+At the end of the command add:
+
+“Design this system with Supabase + Postgres + Edge Functions compatibility.”
+
+This will align perfectly with your current Wasel backend stack.
