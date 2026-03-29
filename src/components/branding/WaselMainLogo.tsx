@@ -92,7 +92,7 @@ const floatingAnimation = {
   transition: {
     duration: 3,
     repeat: Infinity,
-    ease: 'easeInOut',
+    ease: 'easeInOut' as const,
   },
 };
 
@@ -102,7 +102,7 @@ const glowPulseAnimation = {
   transition: {
     duration: 2.5,
     repeat: Infinity,
-    ease: 'easeInOut',
+    ease: 'easeInOut' as const,
   },
 };
 

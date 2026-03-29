@@ -793,21 +793,21 @@ export function LandingPage({ onGetStarted, onLogin, onExploreRides, onOfferRide
   const liveServiceCards = [
     {
       title: 'Find a Ride',
-      subtitle: 'Search live intercity rides and book the corridor instantly.',
+      subtitle: 'Search live intercity rides across Jordan with booking built for everyday regional travel.',
       icon: <Navigation className="w-5 h-5" />,
       color: '#00C8E8',
       action: onExploreRides,
     },
     {
       title: 'Offer a Ride',
-      subtitle: 'Publish seats, turn your route live, and open package capacity.',
+      subtitle: 'Publish seats, activate your route, and unlock trusted passenger and package demand.',
       icon: <Car className="w-5 h-5" />,
       color: '#3B82F6',
       action: onOfferRide,
     },
     {
       title: 'Packages',
-      subtitle: 'Send, track, and attach deliveries to already-posted rides.',
+      subtitle: 'Send, track, and share package capacity on the same live mobility network.',
       icon: <Package className="w-5 h-5" />,
       color: '#F0A830',
       action: onExplorePackages,
@@ -1122,12 +1122,12 @@ export function LandingPage({ onGetStarted, onLogin, onExploreRides, onOfferRide
                   </div>
                   <div>
                     <div className="text-[10px] uppercase tracking-[0.24em] text-[#5EE7FF]/80">Live Grid</div>
-                    <div className="text-white font-semibold">Jordan Mobility Network</div>
+                    <div className="text-white font-semibold">Middle East Ride &amp; Package Network</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-white/55 text-xs">
                   <span className="inline-flex w-2 h-2 rounded-full bg-[#00C875]" />
-                  <span>9 active corridors visualized in real time</span>
+                  <span>Jordan-first corridors powering a new regional sharing standard</span>
                 </div>
               </motion.div>
 
@@ -1142,21 +1142,21 @@ export function LandingPage({ onGetStarted, onLogin, onExploreRides, onOfferRide
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.45, duration: 0.7 }}
               >
-                <div className="text-[10px] uppercase tracking-[0.24em] text-white/45 mb-3">Flagship Route</div>
+                <div className="text-[10px] uppercase tracking-[0.24em] text-white/45 mb-3">Flagship Corridor</div>
                 <div className="flex items-center justify-between gap-4 mb-3">
                   <div>
                     <div className="text-white font-semibold">Amman to Aqaba</div>
-                    <div className="text-white/50 text-xs">330 km corridor</div>
+                    <div className="text-white/50 text-xs">330 km ride and parcel corridor</div>
                   </div>
                   <div className="text-right">
                     <div className="text-[#F0A830] font-black text-lg">8 JOD</div>
-                    <div className="text-white/45 text-xs">from per seat</div>
+                    <div className="text-white/45 text-xs">from per shared seat</div>
                   </div>
                 </div>
                 <div className="h-px bg-white/8 mb-3" />
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/55">Average load</span>
-                  <span className="text-[#A8E63D] font-semibold">87% occupied</span>
+                  <span className="text-white/55">Network efficiency</span>
+                  <span className="text-[#A8E63D] font-semibold">87% seat utilization</span>
                 </div>
               </motion.div>
             </div>
@@ -1175,20 +1175,36 @@ export function LandingPage({ onGetStarted, onLogin, onExploreRides, onOfferRide
               >
                 <div className="hidden sm:flex items-center justify-between mb-4">
                   <div>
-                    <div className="text-[10px] uppercase tracking-[0.24em] text-white/42 mb-1">Network Snapshot</div>
-                    <div className="text-white/72 text-sm">Mobility, trust, and parcel readiness in one frame</div>
+                    <div className="text-[10px] uppercase tracking-[0.24em] text-white/42 mb-1">Platform Standards</div>
+                    <div className="text-white/72 text-sm">World-class mobility UX, trust systems, and package readiness in one app</div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-white/55">
                     <div className="w-2 h-2 rounded-full bg-[#5EE7FF]" />
-                    <span>Updated live</span>
+                    <span>Built for leading regional scale</span>
                   </div>
+                </div>
+                <div className="hidden sm:flex flex-wrap items-center gap-2 mb-4">
+                  {[
+                    'Jordan-first launch',
+                    'Ride + package sharing',
+                    'Middle East ambition',
+                    'Enterprise-grade trust',
+                  ].map((pill) => (
+                    <span
+                      key={pill}
+                      className="rounded-full border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-white/62"
+                      style={{ background: 'rgba(255,255,255,0.035)' }}
+                    >
+                      {pill}
+                    </span>
+                  ))}
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { label: 'Active cities', value: '10', tone: '#5EE7FF', icon: MapPin },
-                    { label: 'Shared trips', value: '48K+', tone: '#F0A830', icon: Navigation },
-                    { label: 'Trust score', value: '4.9', tone: '#A8E63D', icon: Shield },
-                    { label: 'Package ready', value: '24/7', tone: '#00C875', icon: Package },
+                    { label: 'Jordan live cities', value: '10', tone: '#5EE7FF', icon: MapPin },
+                    { label: 'Shared rides', value: '48K+', tone: '#F0A830', icon: Navigation },
+                    { label: 'Verified trust score', value: '4.9', tone: '#A8E63D', icon: Shield },
+                    { label: 'Package network', value: '24/7', tone: '#00C875', icon: Package },
                   ].map((item, index) => {
                     const Icon = item.icon;
                     return (
@@ -1250,17 +1266,17 @@ export function LandingPage({ onGetStarted, onLogin, onExploreRides, onOfferRide
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <Reveal>
-              <SectionTag text="The Problem" />
+              <SectionTag text="Why It Matters" />
               <h2 className="font-black mb-6" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', lineHeight: 1.1 }}>
                 <span style={{
                   backgroundImage: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
                   WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
                 }}>
-                  Mobility is broken.
+                  The Middle East needs a better way to share rides and move packages.
                 </span>
               </h2>
               <p className="text-white/55 text-xl max-w-2xl mx-auto leading-relaxed">
-                Every day, thousands of cars drive between Jordanian cities with empty seats, while people pay too much and wait too long.
+                Every day, intercity travel still wastes empty seats, costs too much, and leaves packages waiting. Wasel turns that unused movement into a higher-standard network.
               </p>
             </Reveal>
           </div>
@@ -1303,13 +1319,13 @@ export function LandingPage({ onGetStarted, onLogin, onExploreRides, onOfferRide
           <Reveal>
             <SectionTag text="The Breakthrough" />
             <h2 className="font-black mb-8" style={{ fontSize: 'clamp(2.2rem, 6vw, 4.5rem)', lineHeight: 1.05 }}>
-              <span className="text-white">What if every trip </span>
+              <span className="text-white">The first Middle East platform to let one trip serve </span>
               <br />
               <span style={{
                 backgroundImage: 'linear-gradient(135deg, #00C8E8 0%, #5EE7FF 50%, #F0A830 100%)',
                 WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>
-                carried more?
+                riders and packages together.
               </span>
             </h2>
             <p className="text-white/60 text-xl max-w-3xl mx-auto leading-relaxed mb-12">

@@ -27,6 +27,18 @@ import {
 } from '../utils/currency';
 import { C, F, R, SH, GRAD, GLOBAL_STYLES } from '../utils/wasel-ds';
 import { MobileBottomNav } from '../components/MobileBottomNav';
+import { AvailabilityBanner } from '../components/system/AvailabilityBanner';
+
+type NavItem = {
+  emoji: string;
+  label: string;
+  labelAr: string;
+  desc: string;
+  descAr: string;
+  path: string;
+  color: string;
+  badge: string | null;
+};
 
 // ── Nav definition (production-safe — no internal testing tools) ──────────────
 const PRODUCT_NAV_GROUPS = [
@@ -69,7 +81,7 @@ function isVisibleNavGroup(group: NavGroup) {
     return !HIDDEN_NAV_PATHS.has(group.path);
   }
 
-  const items = ('items' in group ? group.items : []) as readonly { path: string }[];
+  const items = ('items' in group ? group.items : []) as unknown as readonly NavItem[];
   return items.some(item => !HIDDEN_NAV_PATHS.has(item.path));
 }
 
@@ -78,7 +90,7 @@ function getVisibleNavItems(group: NavGroup) {
     return [];
   }
 
-  const items = ('items' in group ? group.items : []) as readonly { path: string }[];
+  const items = ('items' in group ? group.items : []) as unknown as readonly NavItem[];
   return items.filter(item => !HIDDEN_NAV_PATHS.has(item.path));
 }
 
@@ -220,10 +232,7 @@ function NavDropdown({ group, onNavigate, align, ar }: {
   ar: boolean;
 }) {
   if ('direct' in group && group.direct) return null;
-  const items = getVisibleNavItems(group) as readonly {
-    emoji: string; label: string; labelAr: string;
-    desc: string; descAr: string; path: string; color: string; badge: string | null;
-  }[];
+  const items = getVisibleNavItems(group);
 
   if (!items.length) return null;
 
@@ -536,7 +545,7 @@ function MobileDrawer({ open, onClose, onNavigate, user, onSignOut, ar }: {
                   {(group as any).badge && <Badge label={(group as any).badge} />}
                 </button>
               ) : (
-                (getVisibleNavItems(group) as readonly { emoji: string; label: string; labelAr: string; path: string; badge: string | null; color: string }[]).map(item => (
+                getVisibleNavItems(group).map(item => (
                   <button key={item.label} onClick={() => { onNavigate(item.path); onClose(); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: 'none', border: 'none', cursor: 'pointer', width: '100%' }}>
                     <span style={{ fontSize: '1.05rem' }}>{item.emoji}</span>
                     <span style={{ fontSize: '0.84rem', fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: F }}>
@@ -775,6 +784,8 @@ export default function WaselRoot() {
       </header>
 
       {/* ── Mobile Drawer ── */}
+      <AvailabilityBanner ar={ar} />
+
       <MobileDrawer
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}

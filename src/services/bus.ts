@@ -107,13 +107,7 @@ function normalizeBusRoute(raw: Record<string, unknown>, index: number): BusRout
 
 export async function fetchBusRoutes(query: BusRouteQuery): Promise<BusRoute[]> {
   const response = await tripsAPI.searchTrips(query.from, query.to, query.date, query.seats);
-  const list = Array.isArray(response)
-    ? response
-    : Array.isArray(response?.trips)
-      ? response.trips
-      : Array.isArray(response?.data)
-        ? response.data
-        : [];
+  const list = Array.isArray(response) ? response : [];
 
   const mapped = list
     .filter((item: unknown) => item && typeof item === 'object')

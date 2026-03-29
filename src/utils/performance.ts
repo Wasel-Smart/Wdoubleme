@@ -8,6 +8,9 @@
 import { onCLS, onFCP, onLCP, onTTFB, onINP, type Metric } from 'web-vitals';
 import { logger } from './monitoring';
 
+let performanceMonitoringInitialized = false;
+let longTaskObserverStarted = false;
+
 export interface WebVital {
   name: string;
   value: number;
@@ -39,7 +42,9 @@ const PERFORMANCE_BUDGETS = {
 
 // Initialize Web Vitals tracking
 export function initPerformanceMonitoring() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || performanceMonitoringInitialized) return;
+
+  performanceMonitoringInitialized = true;
 
   // Track Cumulative Layout Shift
   onCLS((metric) => {
@@ -230,7 +235,9 @@ export function getResourceTimings() {
 
 // Long tasks detection
 export function detectLongTasks() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || longTaskObserverStarted) return;
+
+  longTaskObserverStarted = true;
   
   const observer = new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
@@ -247,6 +254,7 @@ export function detectLongTasks() {
   try {
     observer.observe({ entryTypes: ['longtask'] });
   } catch (error) {
+    longTaskObserverStarted = false;
     console.warn('Long task detection not supported');
   }
 }

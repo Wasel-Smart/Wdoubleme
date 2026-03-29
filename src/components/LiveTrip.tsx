@@ -195,8 +195,6 @@ export function LiveTrip({
         return 'Driver is on the way';
       case 'arriving':
         return 'Driver is arriving';
-      case 'picked_up':
-        return 'Picked up - heading to destination';
       case 'in_progress':
         return 'Trip in progress';
       case 'completed':
@@ -211,7 +209,6 @@ export function LiveTrip({
       case 'waiting':
       case 'arriving':
         return 'bg-yellow-500';
-      case 'picked_up':
       case 'in_progress':
         return 'bg-green-500';
       case 'completed':

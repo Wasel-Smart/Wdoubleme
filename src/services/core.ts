@@ -1,12 +1,3 @@
-/**
- * services/core.ts — Shared HTTP / Supabase primitives for the Wasel frontend.
- *
- * ✅ fetchWithRetry: exponential backoff + per-request timeout + abort support
- * ✅ warmUpServer: pre-pings the Edge Function health endpoint on app load
- * ✅ Singleton Supabase client re-export
- * ✅ getAuthDetails: one-shot helper for token + userId
- */
-
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import {
   supabase as supabaseClient,
@@ -19,111 +10,236 @@ export const API_URL = supabaseUrl
   ? `${supabaseUrl}/functions/v1/make-server-0b1f4071`
   : '';
 
-// ── Edge Function Status ────────────────────────────────────────────────────
-let _edgeFunctionAvailable = true;
+export type BackendStatus = 'unknown' | 'healthy' | 'degraded' | 'offline';
 
-/**
- * Check if Edge Function is available. If it fails repeatedly,
- * we'll mark it as unavailable and use direct Supabase queries instead.
- */
+export interface AvailabilitySnapshot {
+  networkOnline: boolean;
+  edgeFunctionAvailable: boolean;
+  backendStatus: BackendStatus;
+  usingFallbackMode: boolean;
+  lastCheckedAt: number | null;
+}
+
+type AvailabilityListener = (snapshot: AvailabilitySnapshot) => void;
+
+let edgeFunctionAvailable = true;
+let backendStatus: BackendStatus = API_URL ? 'unknown' : 'degraded';
+let lastCheckedAt: number | null = null;
+const availabilityListeners = new Set<AvailabilityListener>();
+
+function getNetworkOnline(): boolean {
+  if (typeof navigator === 'undefined') {
+    return true;
+  }
+  return navigator.onLine;
+}
+
+function buildAvailabilitySnapshot(): AvailabilitySnapshot {
+  const networkOnline = getNetworkOnline();
+
+  if (!networkOnline) {
+    return {
+      networkOnline,
+      edgeFunctionAvailable,
+      backendStatus: 'offline',
+      usingFallbackMode: !edgeFunctionAvailable,
+      lastCheckedAt,
+    };
+  }
+
+  return {
+    networkOnline,
+    edgeFunctionAvailable,
+    backendStatus,
+    usingFallbackMode: !edgeFunctionAvailable,
+    lastCheckedAt,
+  };
+}
+
+function notifyAvailabilityListeners(): void {
+  const snapshot = buildAvailabilitySnapshot();
+  availabilityListeners.forEach((listener) => listener(snapshot));
+}
+
+function setEdgeFunctionAvailability(nextValue: boolean): void {
+  if (edgeFunctionAvailable === nextValue) {
+    return;
+  }
+
+  edgeFunctionAvailable = nextValue;
+  notifyAvailabilityListeners();
+}
+
+function setBackendStatus(nextStatus: BackendStatus): void {
+  backendStatus = nextStatus;
+  lastCheckedAt = Date.now();
+  notifyAvailabilityListeners();
+}
+
+export function getAvailabilitySnapshot(): AvailabilitySnapshot {
+  return buildAvailabilitySnapshot();
+}
+
+export function subscribeAvailability(listener: AvailabilityListener): () => void {
+  availabilityListeners.add(listener);
+  listener(buildAvailabilitySnapshot());
+
+  return () => {
+    availabilityListeners.delete(listener);
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    notifyAvailabilityListeners();
+  });
+
+  window.addEventListener('offline', () => {
+    notifyAvailabilityListeners();
+  });
+}
+
 export function isEdgeFunctionAvailable(): boolean {
-  return _edgeFunctionAvailable;
+  return edgeFunctionAvailable;
 }
 
 export function markEdgeFunctionUnavailable(): void {
-  if (_edgeFunctionAvailable) {
-    // Check if we're in development mode (safely handle import.meta)
+  if (edgeFunctionAvailable) {
     const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
     if (isDev) {
-      console.info('��� Edge Function unavailable - using direct Supabase queries (this is normal in development)');
+      console.info('[Wasel] Edge Function unavailable, using direct Supabase queries.');
     }
-    _edgeFunctionAvailable = false;
   }
+
+  setEdgeFunctionAvailability(false);
+  setBackendStatus(getNetworkOnline() ? 'degraded' : 'offline');
 }
 
-// ── Server warm-up ──────────────────────────────────────────────────────────
+export async function probeBackendHealth(timeout = 8_000): Promise<AvailabilitySnapshot> {
+  if (!API_URL || !publicAnonKey) {
+    setBackendStatus('degraded');
+    setEdgeFunctionAvailability(false);
+    return buildAvailabilitySnapshot();
+  }
 
-let _serverWarm = false;
-let _warmUpAttempts = 0;
-const MAX_WARMUP_ATTEMPTS = 3;
-
-/**
- * Fire-and-forget health ping to wake up the Edge Function.
- * Called once on app startup so the first real request doesn't hit a cold start.
- * Retries up to 3 times with increasing delay if the first ping fails.
- * If all attempts fail, marks Edge Function as unavailable.
- */
-export async function warmUpServer(): Promise<void> {
-  if (_serverWarm || !API_URL || !publicAnonKey) return;
-  _warmUpAttempts++;
+  if (!getNetworkOnline()) {
+    setBackendStatus('offline');
+    return buildAvailabilitySnapshot();
+  }
 
   try {
-    const res = await fetch(`${API_URL}/health`, {
+    const response = await fetch(`${API_URL}/health`, {
+      signal: AbortSignal.timeout(timeout),
+      headers: { Authorization: `Bearer ${publicAnonKey}` },
+    });
+
+    if (response.ok) {
+      setEdgeFunctionAvailability(true);
+      setBackendStatus('healthy');
+    } else {
+      setEdgeFunctionAvailability(false);
+      setBackendStatus('degraded');
+    }
+  } catch {
+    setEdgeFunctionAvailability(false);
+    setBackendStatus(getNetworkOnline() ? 'degraded' : 'offline');
+  }
+
+  return buildAvailabilitySnapshot();
+}
+
+let warmUpAttempts = 0;
+let serverWarm = false;
+const MAX_WARMUP_ATTEMPTS = 3;
+
+export async function warmUpServer(): Promise<void> {
+  if (serverWarm || !API_URL || !publicAnonKey) {
+    return;
+  }
+
+  warmUpAttempts += 1;
+
+  try {
+    const response = await fetch(`${API_URL}/health`, {
       signal: AbortSignal.timeout(12_000),
       headers: { Authorization: `Bearer ${publicAnonKey}` },
     });
-    if (res.ok) {
-      _serverWarm = true;
-      _edgeFunctionAvailable = true;
-      console.log('[warmUp] Edge Function is warm ✅');
-    } else {
-      if (_warmUpAttempts < MAX_WARMUP_ATTEMPTS) {
-        setTimeout(() => warmUpServer(), 2000 * _warmUpAttempts);
-      } else {
-        markEdgeFunctionUnavailable();
-      }
+
+    if (response.ok) {
+      serverWarm = true;
+      setEdgeFunctionAvailability(true);
+      setBackendStatus('healthy');
+      return;
     }
-  } catch (err) {
-    // Only log on final attempt to reduce console noise
-    if (_warmUpAttempts >= MAX_WARMUP_ATTEMPTS) {
-      console.info(`[warmUp] Edge Function unavailable after ${MAX_WARMUP_ATTEMPTS} attempts. Using direct Supabase queries.`);
-      markEdgeFunctionUnavailable();
-    } else {
-      // Silent retry
-      setTimeout(() => warmUpServer(), 2000 * _warmUpAttempts);
-    }
+  } catch {
+    // The retry path below handles the final state.
   }
+
+  if (warmUpAttempts < MAX_WARMUP_ATTEMPTS) {
+    setTimeout(() => {
+      void warmUpServer();
+    }, 2_000 * warmUpAttempts);
+    return;
+  }
+
+  markEdgeFunctionUnavailable();
 }
 
-// Kick off warm-up immediately when this module loads
-warmUpServer();
+let healthPollTimer: ReturnType<typeof setInterval> | null = null;
 
-// ── fetchWithRetry ──────────────────────────────────────────────────────────
+export function startAvailabilityPolling(intervalMs = 60_000): () => void {
+  if (healthPollTimer) {
+    return () => stopAvailabilityPolling();
+  }
+
+  healthPollTimer = setInterval(() => {
+    void probeBackendHealth();
+  }, intervalMs);
+
+  return () => stopAvailabilityPolling();
+}
+
+export function stopAvailabilityPolling(): void {
+  if (!healthPollTimer) {
+    return;
+  }
+
+  clearInterval(healthPollTimer);
+  healthPollTimer = null;
+}
+
+warmUpServer().catch(() => {
+  markEdgeFunctionUnavailable();
+});
 
 interface FetchWithRetryOptions extends RequestInit {
-  /** Per-attempt timeout in ms. Default: 5000 (fast failover for graceful degradation) */
   timeout?: number;
 }
 
-/**
- * Fetch with exponential backoff and per-attempt timeout.
- *
- * Retries on network errors and 502/503/504 responses.
- * Respects the caller's `signal` for cancellation.
- */
 export async function fetchWithRetry(
   url: string,
   options: FetchWithRetryOptions = {},
-  retries = 1,  // Default to 1 retry (down from 3) for fast failover
-  backoff = 500, // Default to 500ms (down from 800ms) for faster response
+  retries = 1,
+  backoff = 500,
 ): Promise<Response> {
   if (!url) {
     throw new Error('Backend API is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
   }
 
-  const { timeout = 5_000, signal: callerSignal, ...fetchOptions } = options; // Default to 5s (down from 20s)
+  const {
+    timeout = 5_000,
+    signal: callerSignal,
+    ...fetchOptions
+  } = options;
 
-  // Merge caller signal with per-attempt timeout
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
-  // If the caller already aborted, forward immediately
   if (callerSignal?.aborted) {
     clearTimeout(timer);
     throw new DOMException('Request aborted', 'AbortError');
   }
 
-  // Forward caller abort into our controller
   const onCallerAbort = () => controller.abort();
   callerSignal?.addEventListener('abort', onCallerAbort, { once: true });
 
@@ -133,40 +249,43 @@ export async function fetchWithRetry(
       signal: controller.signal,
     });
 
-    // Retry on transient server errors (typically cold-start gateway timeouts)
-    if (retries > 0 && (response.status === 502 || response.status === 503 || response.status === 504)) {
-      console.warn(
-        `[fetchWithRetry] ${response.status} from ${url}. Retrying (${retries} left) in ${backoff}ms…`,
-      );
+    if (response.ok) {
+      setBackendStatus('healthy');
+      if (edgeFunctionAvailable || url.includes('/health')) {
+        setEdgeFunctionAvailability(true);
+      }
+    }
+
+    if (retries > 0 && [502, 503, 504].includes(response.status)) {
       await delay(backoff);
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
 
+    if (!response.ok && response.status >= 500) {
+      setBackendStatus(getNetworkOnline() ? 'degraded' : 'offline');
+    }
+
     return response;
   } catch (error: unknown) {
-    // Don't retry if the caller explicitly aborted
-    if (callerSignal?.aborted) throw error;
+    if (callerSignal?.aborted) {
+      throw error;
+    }
 
     const isRetryable =
       error instanceof TypeError ||
       (error instanceof DOMException && error.name === 'AbortError');
 
     if (retries > 0 && isRetryable) {
-      // Silent retry - only log in development
-      const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
-      if (isDev) {
-        console.info(
-          `[fetchWithRetry] Retrying ${url} (${retries} left)...`,
-        );
-      }
       await delay(backoff);
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
 
-    // Only log exhausted retries as info since fallback handles it gracefully
-    console.info(
-      `[fetchWithRetry] Using fallback for ${url.split('/').slice(-2).join('/')}`,
-    );
+    setBackendStatus(getNetworkOnline() ? 'degraded' : 'offline');
+
+    if (url.startsWith(API_URL)) {
+      setEdgeFunctionAvailability(false);
+    }
+
     throw error;
   } finally {
     clearTimeout(timer);
@@ -175,30 +294,28 @@ export async function fetchWithRetry(
 }
 
 function delay(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ── Supabase singleton ──────────────────────────────────────────────────────
-
 export const supabase = supabaseClient;
-
-// ── Auth details helper ─────────────────────────────────────────────────────
 
 export interface AuthDetails {
   token: string;
   userId: string;
 }
 
-/**
- * Resolve the current session's access_token and user id.
- * Throws if the user is not authenticated.
- */
 export async function getAuthDetails(): Promise<AuthDetails> {
-  if (!supabase) throw new Error('Supabase client is not initialised');
+  if (!supabase) {
+    throw new Error('Supabase client is not initialised');
+  }
 
   const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  if (!session) throw new Error('Not authenticated');
+  if (error) {
+    throw error;
+  }
+  if (!session) {
+    throw new Error('Not authenticated');
+  }
 
   return {
     token: session.access_token,

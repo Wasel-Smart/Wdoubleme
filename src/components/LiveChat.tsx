@@ -7,18 +7,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Send, 
-  Image as ImageIcon, 
   MapPin, 
   Phone, 
   X,
-  MoreVertical,
-  Paperclip
 } from 'lucide-react';
-import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { liveChatService, ChatMessage } from '../services/liveChat';
+import { liveChatService } from '../services/liveChat';
+import type { ChatMessage } from '../services/liveChat';
 import { useTranslation } from './hooks/useTranslation';
 import { toast } from 'sonner';
 
@@ -38,9 +35,7 @@ export function LiveChat({
   recipientId,
   recipientName,
   recipientAvatar,
-  recipientType,
   currentUserId,
-  currentUserType,
   onClose,
 }: LiveChatProps) {
   const { t } = useTranslation();
@@ -50,27 +45,38 @@ export function LiveChat({
   const [isConnected, setIsConnected] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Initialize chat
   useEffect(() => {
     let mounted = true;
+    let unsubscribeMessages = () => {};
+    let unsubscribeTyping = () => {};
 
     const init = async () => {
       try {
-        // Initialize chat service
-        await liveChatService.initialize(currentUserId, currentUserType);
-        
-        // Join trip room
-        await liveChatService.joinTrip(tripId);
-        
         // Load message history
-        const history = await liveChatService.getMessageHistory(tripId);
+        const history = await liveChatService.getChatHistory(tripId);
         if (mounted) {
           setMessages(history);
           setIsConnected(true);
         }
+
+        unsubscribeMessages = liveChatService.subscribeToMessages(tripId, (message) => {
+          if (!mounted) return;
+          setMessages((prev) => [...prev, message]);
+
+          if (message.sender_id === recipientId) {
+            void liveChatService.markAsRead(tripId, currentUserId);
+          }
+        });
+
+        unsubscribeTyping = liveChatService.subscribeToTyping(tripId, (typing, userId) => {
+          if (mounted && userId === recipientId) {
+            setIsTyping(typing);
+          }
+        });
       } catch (error) {
         console.error('[LiveChat] Initialization error:', error);
         toast.error(t('chat.connection_error'));
@@ -79,39 +85,13 @@ export function LiveChat({
 
     init();
 
-    // Subscribe to events
-    const unsubMessage = liveChatService.on('message', (message: ChatMessage) => {
-      if (message.trip_id === tripId && mounted) {
-        setMessages((prev) => [...prev, message]);
-        
-        // Mark as read if it's from recipient
-        if (message.sender_id === recipientId) {
-          liveChatService.markAsRead(message.id);
-        }
-      }
-    });
-
-    const unsubTyping = liveChatService.on('typing', (indicator: any) => {
-      if (indicator.trip_id === tripId && indicator.user_id === recipientId && mounted) {
-        setIsTyping(indicator.is_typing);
-      }
-    });
-
-    const unsubConnection = liveChatService.on('connection', (data: any) => {
-      if (mounted) {
-        setIsConnected(data.status === 'connected');
-      }
-    });
-
     // Cleanup
     return () => {
       mounted = false;
-      unsubMessage();
-      unsubTyping();
-      unsubConnection();
-      liveChatService.leaveTrip(tripId);
+      unsubscribeMessages();
+      unsubscribeTyping();
     };
-  }, [tripId, currentUserId, currentUserType, recipientId, t]);
+  }, [tripId, currentUserId, recipientId, t]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -123,7 +103,7 @@ export function LiveChat({
     setInputValue(e.target.value);
 
     // Send typing indicator
-    liveChatService.sendTyping(tripId, true);
+    void liveChatService.sendTypingIndicator(tripId, currentUserId, true);
 
     // Clear existing timeout
     if (typingTimeoutRef.current) {
@@ -132,9 +112,9 @@ export function LiveChat({
 
     // Stop typing after 2 seconds
     typingTimeoutRef.current = setTimeout(() => {
-      liveChatService.sendTyping(tripId, false);
+      void liveChatService.sendTypingIndicator(tripId, currentUserId, false);
     }, 2000);
-  }, [tripId]);
+  }, [tripId, currentUserId]);
 
   // Send message
   const handleSendMessage = useCallback(async () => {
@@ -145,13 +125,18 @@ export function LiveChat({
     try {
       const message = await liveChatService.sendMessage(
         tripId,
-        inputValue.trim(),
-        recipientId
+        currentUserId,
+        recipientId,
+        inputValue.trim()
       );
+
+      if (!message) {
+        throw new Error('Message was not created');
+      }
 
       setMessages((prev) => [...prev, message]);
       setInputValue('');
-      liveChatService.sendTyping(tripId, false);
+      void liveChatService.sendTypingIndicator(tripId, currentUserId, false);
       
       // Clear typing timeout
       if (typingTimeoutRef.current) {
@@ -164,7 +149,7 @@ export function LiveChat({
       setIsSending(false);
       inputRef.current?.focus();
     }
-  }, [inputValue, tripId, recipientId, isSending, t]);
+  }, [currentUserId, inputValue, tripId, recipientId, isSending, t]);
 
   // Handle key press
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
@@ -186,12 +171,16 @@ export function LiveChat({
         try {
           const message = await liveChatService.sendLocation(
             tripId,
+            currentUserId,
+            recipientId,
             {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
-            },
-            recipientId
+            }
           );
+          if (!message) {
+            throw new Error('Location message was not created');
+          }
           setMessages((prev) => [...prev, message]);
           toast.success(t('chat.location_sent'));
         } catch (error) {
@@ -204,10 +193,10 @@ export function LiveChat({
         toast.error(t('chat.location_error'));
       }
     );
-  }, [tripId, recipientId, t]);
+  }, [currentUserId, tripId, recipientId, t]);
 
   // Format timestamp
-  const formatTime = (timestamp: number) => {
+  const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -277,16 +266,16 @@ export function LiveChat({
                         : 'bg-card dark:bg-card text-foreground dark:text-white rounded-bl-none'
                     }`}
                   >
-                    {message.type === 'text' && (
+                    {message.message_type === 'text' && (
                       <p className="text-sm whitespace-pre-wrap break-words">
                         {message.message}
                       </p>
                     )}
                     
-                    {message.type === 'image' && message.metadata?.image_url && (
+                    {message.message_type === 'image' && message.media_url && (
                       <div className="space-y-2">
                         <img
-                          src={message.metadata.image_url}
+                          src={message.media_url}
                           alt="Shared image"
                           className="rounded-lg max-w-full"
                         />
@@ -296,14 +285,14 @@ export function LiveChat({
                       </div>
                     )}
                     
-                    {message.type === 'location' && message.metadata?.location && (
+                    {message.message_type === 'location' && message.location && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">
                           <MapPin className="h-4 w-4" />
                           <span>{t('chat.location_shared')}</span>
                         </div>
                         <a
-                          href={`https://www.google.com/maps?q=${message.metadata.location.lat},${message.metadata.location.lng}`}
+                          href={`https://www.google.com/maps?q=${message.location.lat},${message.location.lng}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs underline"
@@ -316,9 +305,9 @@ export function LiveChat({
                   
                   <div className={`flex items-center gap-1 mt-1 px-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-xs text-gray-500">
-                      {formatTime(message.timestamp)}
+                      {formatTime(message.created_at)}
                     </span>
-                    {isOwn && message.read && (
+                    {isOwn && message.is_read && (
                       <span className="text-xs text-green-600">{t('chat.read')}</span>
                     )}
                   </div>

@@ -22,6 +22,7 @@ import type { ActiveTrip } from '../services/activeTrip';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface MyTripDriver {
+  id?: string;
   name: string;
   initials: string;
   rating: number;
@@ -33,6 +34,7 @@ export interface MyTripRecord {
   id: string;
   trip_id: string;
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'completed';
+  rated?: boolean;
   seats_requested: number;
   total_price: number;
   pickup_stop: string;

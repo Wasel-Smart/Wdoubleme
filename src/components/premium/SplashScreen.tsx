@@ -142,10 +142,11 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             transition={{ delay: 0.5 }}
             className="w-full max-w-[200px]"
           >
-            <div className="h-1.5 rounded-full overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <div
+              className="h-1.5 rounded-full overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.08)' }}
+            >
               <motion.div
-                style={{ width: `${progress}%` }}
                 className="h-full rounded-full"
                 style={{
                   width: `${progress}%`,

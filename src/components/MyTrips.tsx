@@ -31,6 +31,7 @@ import { WaselBadge } from './wasel-ui/WaselBadge';
 import { WaselSectionHeader } from './wasel-ui/WaselSectionHeader';
 import { useMyTrips } from '../hooks/useMyTrips';
 import type { MyTripRecord, DriverTripRecord } from '../hooks/useMyTrips';
+import type { ActiveTrip } from '../services/activeTrip';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
