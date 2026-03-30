@@ -1,9 +1,9 @@
 /**
  * Security Headers & Configuration
- * Version: 1.0.0
- * 
+ * Version: 1.1.0
+ *
  * Implements security best practices:
- * - Content Security Policy (CSP)
+ * - Content Security Policy (CSP) — env-aware (no unsafe-* in production)
  * - Rate Limiting
  * - Strong Password Requirements
  * - 2FA Support
@@ -13,19 +13,27 @@ import { supabase } from '@/utils/supabase/client';
 import { logger } from '@/utils/monitoring';
 import { getConfig } from '@/utils/env';
 
+// ── Detect environment ───────────────────────────────────────────────────────
+const IS_DEV =
+  typeof import.meta !== 'undefined' &&
+  import.meta.env?.MODE === 'development';
+
 // ── Content Security Policy ─────────────────────────────────────────────────
+// unsafe-inline / unsafe-eval are ONLY included in development.
+// Production uses strict CSP without these dangerous directives.
 export const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
   'script-src': [
     "'self'",
-    "'unsafe-inline'", // Required for Vite dev mode
-    "'unsafe-eval'", // Required for Vite dev mode
+    ...(IS_DEV ? ["'unsafe-inline'", "'unsafe-eval'"] : []),
     'https://cdn.jsdelivr.net',
     'https://unpkg.com',
+    'https://js.stripe.com',
   ],
   'style-src': [
     "'self'",
-    "'unsafe-inline'", // Required for Tailwind
+    // unsafe-inline is required for Tailwind inline styles at runtime
+    "'unsafe-inline'",
     'https://fonts.googleapis.com',
   ],
   'img-src': [
@@ -35,6 +43,7 @@ export const CSP_DIRECTIVES = {
     'https:',
     'https://*.supabase.co',
     'https://images.unsplash.com',
+    'https://api.qrserver.com',
   ],
   'font-src': [
     "'self'",
@@ -47,10 +56,12 @@ export const CSP_DIRECTIVES = {
     'wss://*.supabase.co',
     'https://api.stripe.com',
     'https://api.unsplash.com',
+    ...(IS_DEV ? ['ws://localhost:*', 'http://localhost:*'] : []),
   ],
   'frame-src': [
     "'self'",
     'https://js.stripe.com',
+    'https://hooks.stripe.com',
   ],
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
@@ -61,7 +72,7 @@ export const CSP_DIRECTIVES = {
 
 export function getCSPHeader(): string {
   return Object.entries(CSP_DIRECTIVES)
-    .map(([key, values]) => `${key} ${values.join(' ')}`)
+    .map(([key, values]) => `${key} ${values.join(' ')}`.trim())
     .join('; ');
 }
 
@@ -80,29 +91,19 @@ export function checkRateLimit(
 ): boolean {
   const now = Date.now();
   const record = rateLimitStore.get(key);
-  
-  // No record or expired - allow request
+
   if (!record || now > record.resetAt) {
-    rateLimitStore.set(key, {
-      count: 1,
-      resetAt: now + config.windowMs,
-    });
+    rateLimitStore.set(key, { count: 1, resetAt: now + config.windowMs });
     return true;
   }
-  
-  // Increment count
+
   record.count++;
-  
-  // Check if limit exceeded
+
   if (record.count > config.maxRequests) {
-    logger.warning('Rate limit exceeded', {
-      key,
-      count: record.count,
-      limit: config.maxRequests,
-    });
+    logger.warning('Rate limit exceeded', { key, count: record.count, limit: config.maxRequests });
     return false;
   }
-  
+
   return true;
 }
 
@@ -114,16 +115,14 @@ export function resetRateLimit(key: string): void {
 setInterval(() => {
   const now = Date.now();
   for (const [key, record] of rateLimitStore.entries()) {
-    if (now > record.resetAt) {
-      rateLimitStore.delete(key);
-    }
+    if (now > record.resetAt) rateLimitStore.delete(key);
   }
 }, 5 * 60 * 1000);
 
 // ── Password Strength ────────────────────────────────────────────────────────
 
 export interface PasswordStrength {
-  score: 0 | 1 | 2 | 3 | 4; // 0=weak, 4=strong
+  score: 0 | 1 | 2 | 3 | 4;
   feedback: string[];
   isValid: boolean;
 }
@@ -131,69 +130,47 @@ export interface PasswordStrength {
 export function checkPasswordStrength(password: string): PasswordStrength {
   const feedback: string[] = [];
   let score = 0;
-  
-  // Length check
+
   if (password.length < 8) {
     feedback.push('Password must be at least 8 characters');
-  } else if (password.length >= 8) {
+  } else {
     score++;
   }
-  
-  if (password.length >= 12) {
-    score++;
-  }
-  
-  // Character diversity
+  if (password.length >= 12) score++;
+
   const hasLowercase = /[a-z]/.test(password);
   const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
-  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-  
+  const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
+
   if (!hasLowercase) feedback.push('Add lowercase letters');
   if (!hasUppercase) feedback.push('Add uppercase letters');
   if (!hasNumber) feedback.push('Add numbers');
   if (!hasSpecial) feedback.push('Add special characters');
-  
+
   const diversityScore = [hasLowercase, hasUppercase, hasNumber, hasSpecial].filter(Boolean).length;
-  score += Math.min(diversityScore - 1, 2); // Max +2 for diversity
-  
-  // Common patterns
-  const commonPatterns = [
-    /^123456/,
-    /password/i,
-    /qwerty/i,
-    /admin/i,
-    /letmein/i,
-  ];
-  
-  if (commonPatterns.some((pattern) => pattern.test(password))) {
+  score += Math.min(diversityScore - 1, 2);
+
+  const commonPatterns = [/^123456/, /password/i, /qwerty/i, /admin/i, /letmein/i];
+  if (commonPatterns.some(p => p.test(password))) {
     feedback.push('Avoid common patterns');
     score = Math.max(0, score - 1);
   }
-  
-  // Sequential characters
   if (/(.)\1{2,}/.test(password)) {
     feedback.push('Avoid repeating characters');
     score = Math.max(0, score - 1);
   }
-  
+
   const finalScore = Math.min(4, Math.max(0, score)) as 0 | 1 | 2 | 3 | 4;
-  
-  return {
-    score: finalScore,
-    feedback,
-    isValid: finalScore >= 3 && password.length >= 8,
-  };
+  return { score: finalScore, feedback, isValid: finalScore >= 3 && password.length >= 8 };
 }
 
 export function getPasswordStrengthLabel(score: number): string {
-  const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
-  return labels[score] || 'Very Weak';
+  return ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'][score] ?? 'Very Weak';
 }
 
 export function getPasswordStrengthColor(score: number): string {
-  const colors = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#10b981'];
-  return colors[score] || '#ef4444';
+  return ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#10b981'][score] ?? '#ef4444';
 }
 
 // ── Two-Factor Authentication (2FA) ──────────────────────────────────────────
@@ -215,81 +192,43 @@ export function isTwoFactorAvailable(): boolean {
 }
 
 export async function enable2FA(userId: string): Promise<TwoFactorSetup> {
-  if (!isTwoFactorAvailable()) {
-    throw new Error('Two-factor authentication is not enabled for this environment.');
-  }
+  if (!isTwoFactorAvailable()) throw new Error('2FA is not enabled for this environment.');
 
-  try {
-    // Generate TOTP secret
-    const secret = generateTOTPSecret();
-    
-    // Generate QR code
-    const qrCode = generateQRCode(secret, userId);
-    
-    // Generate backup codes
-    const backupCodes = generateBackupCodes(10);
-    
-    // Save to database
-    await supabase
-      .from('profiles')
-      .update({
-        two_factor_enabled: true,
-        two_factor_secret: secret,
-        two_factor_backup_codes: backupCodes,
-      })
-      .eq('id', userId);
-    
-    logger.info('2FA enabled', { userId });
-    
-    return { secret, qrCode, backupCodes };
-  } catch (error) {
-    logger.error('Failed to enable 2FA', error, { userId });
-    throw error;
-  }
+  const secret = generateTOTPSecret();
+  const qrCode = generateQRCode(secret, userId);
+  const backupCodes = generateBackupCodes(10);
+
+  await supabase
+    .from('profiles')
+    .update({ two_factor_enabled: true, two_factor_secret: secret, two_factor_backup_codes: backupCodes })
+    .eq('id', userId);
+
+  logger.info('2FA enabled', { userId });
+  return { secret, qrCode, backupCodes };
 }
 
 export async function verify2FACode(userId: string, code: string): Promise<boolean> {
-  if (!isTwoFactorAvailable()) {
-    logger.warning('2FA verification requested while 2FA is disabled', { userId });
-    return false;
-  }
+  if (!isTwoFactorAvailable()) return false;
 
   try {
-    // Get user's 2FA secret
     const { data: profile } = await supabase
       .from('profiles')
       .select('two_factor_secret, two_factor_backup_codes')
       .eq('id', userId)
       .single();
-    
+
     if (!profile) return false;
-    
-    // Check TOTP code
-    const isValidTOTP = await verifyTOTPCode(profile.two_factor_secret, code);
-    
-    if (isValidTOTP) {
-      logger.info('2FA verified (TOTP)', { userId });
+
+    if (await verifyTOTPCode(profile.two_factor_secret, code)) return true;
+
+    const backupCodes: string[] = profile.two_factor_backup_codes ?? [];
+    const idx = backupCodes.indexOf(code);
+    if (idx !== -1) {
+      backupCodes.splice(idx, 1);
+      await supabase.from('profiles').update({ two_factor_backup_codes: backupCodes }).eq('id', userId);
       return true;
     }
-    
-    // Check backup codes
-    const backupCodes = profile.two_factor_backup_codes || [];
-    const codeIndex = backupCodes.indexOf(code);
-    
-    if (codeIndex !== -1) {
-      // Remove used backup code
-      backupCodes.splice(codeIndex, 1);
-      
-      await supabase
-        .from('profiles')
-        .update({ two_factor_backup_codes: backupCodes })
-        .eq('id', userId);
-      
-      logger.info('2FA verified (backup code)', { userId, remainingCodes: backupCodes.length });
-      return true;
-    }
-    
-    logger.warning('Invalid 2FA code', { userId });
+
     return false;
   } catch (error) {
     logger.error('2FA verification failed', error, { userId });
@@ -298,41 +237,21 @@ export async function verify2FACode(userId: string, code: string): Promise<boole
 }
 
 export async function disable2FA(userId: string, code: string): Promise<boolean> {
-  if (!isTwoFactorAvailable()) {
-    logger.warning('2FA disable requested while 2FA is disabled', { userId });
-    return false;
-  }
+  if (!isTwoFactorAvailable()) return false;
+  if (!(await verify2FACode(userId, code))) return false;
 
-  try {
-    // Verify code before disabling
-    const isValid = await verify2FACode(userId, code);
-    
-    if (!isValid) {
-      return false;
-    }
-    
-    // Disable 2FA
-    await supabase
-      .from('profiles')
-      .update({
-        two_factor_enabled: false,
-        two_factor_secret: null,
-        two_factor_backup_codes: null,
-      })
-      .eq('id', userId);
-    
-    logger.info('2FA disabled', { userId });
-    return true;
-  } catch (error) {
-    logger.error('Failed to disable 2FA', error, { userId });
-    return false;
-  }
+  await supabase
+    .from('profiles')
+    .update({ two_factor_enabled: false, two_factor_secret: null, two_factor_backup_codes: null })
+    .eq('id', userId);
+
+  logger.info('2FA disabled', { userId });
+  return true;
 }
 
-// ── Helper Functions ─────────────────────────────────────────────────────────
+// ── TOTP helpers ─────────────────────────────────────────────────────────────
 
 function generateTOTPSecret(): string {
-  // Use crypto.getRandomValues for cryptographically secure randomness
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -340,68 +259,46 @@ function generateTOTPSecret(): string {
 }
 
 function generateQRCode(secret: string, userId: string): string {
-  // Generate otpauth:// URL for QR code
   const issuer = 'Wasel';
   const label = `${issuer}:${userId}`;
   const url = `otpauth://totp/${encodeURIComponent(label)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
-  
-  // Return data URL for QR code (using a library like qrcode in production)
   return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
 }
 
 function generateBackupCodes(count: number): string[] {
-  const codes: string[] = [];
-  for (let i = 0; i < count; i++) {
-    // Use crypto.getRandomValues for cryptographically secure backup codes
+  return Array.from({ length: count }, () => {
     const bytes = new Uint8Array(6);
     crypto.getRandomValues(bytes);
-    const code = Array.from(bytes)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-      .toUpperCase()
-      .slice(0, 8);
-    codes.push(code);
-  }
-  return codes;
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 8);
+  });
 }
 
 async function verifyTOTPCode(secret: string, code: string): Promise<boolean> {
-  const normalizedCode = code.replace(/\s+/g, '');
-  if (!/^\d{6}$/.test(normalizedCode)) {
-    return false;
-  }
+  const normalized = code.replace(/\s+/g, '');
+  if (!/^\d{6}$/.test(normalized)) return false;
 
   const key = decodeBase32Secret(secret);
-  const currentCounter = Math.floor(Date.now() / 30000);
+  const counter = Math.floor(Date.now() / 30000);
 
   for (let offset = -1; offset <= 1; offset++) {
-    const candidate = await generateTOTPCode(key, currentCounter + offset);
-    if (candidate === normalizedCode) {
-      return true;
-    }
+    if ((await generateTOTPCode(key, counter + offset)) === normalized) return true;
   }
-
   return false;
 }
 
 function decodeBase32Secret(secret: string): Uint8Array {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  const normalized = secret.toUpperCase().replace(/=+$/g, '');
+  const normalized = secret.toUpperCase().replace(/=+$/, '');
   let bits = '';
-
   for (const char of normalized) {
     const value = alphabet.indexOf(char);
-    if (value === -1) {
-      throw new Error('Invalid TOTP secret');
-    }
+    if (value === -1) throw new Error('Invalid TOTP secret');
     bits += value.toString(2).padStart(5, '0');
   }
-
   const bytes: number[] = [];
-  for (let index = 0; index + 8 <= bits.length; index += 8) {
-    bytes.push(parseInt(bits.slice(index, index + 8), 2));
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.slice(i, i + 8), 2));
   }
-
   return new Uint8Array(bytes);
 }
 
@@ -410,29 +307,22 @@ async function generateTOTPCode(secretKey: Uint8Array, counter: number): Promise
   const view = new DataView(buffer);
   view.setUint32(0, Math.floor(counter / 0x100000000), false);
   view.setUint32(4, counter >>> 0, false);
-  const rawSecret = secretKey.slice().buffer as ArrayBuffer;
 
   const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    rawSecret,
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign'],
+    'raw', secretKey.slice().buffer as ArrayBuffer,
+    { name: 'HMAC', hash: 'SHA-1' }, false, ['sign'],
   );
-
-  const signature = new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, buffer));
-  const offset = signature[signature.length - 1] & 0x0f;
-  const binaryCode =
-    ((signature[offset] & 0x7f) << 24) |
-    ((signature[offset + 1] & 0xff) << 16) |
-    ((signature[offset + 2] & 0xff) << 8) |
-    (signature[offset + 3] & 0xff);
-
-  return String(binaryCode % 1000000).padStart(6, '0');
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, buffer));
+  const offset = sig[sig.length - 1] & 0x0f;
+  const binary =
+    ((sig[offset] & 0x7f) << 24) |
+    ((sig[offset + 1] & 0xff) << 16) |
+    ((sig[offset + 2] & 0xff) << 8) |
+    (sig[offset + 3] & 0xff);
+  return String(binary % 1_000_000).padStart(6, '0');
 }
 
-// ── Security Headers for Netlify/Vercel ─────────────────────────────────────
-
+// ── Security Headers for Netlify/Vercel ──────────────────────────────────────
 export const SECURITY_HEADERS = `
 /*
   X-Frame-Options: DENY
@@ -445,48 +335,29 @@ export const SECURITY_HEADERS = `
 `;
 
 // ── Input Sanitization ───────────────────────────────────────────────────────
-
 export function sanitizeInput(input: string): string {
-  // Remove HTML tags
-  let sanitized = input.replace(/<[^>]*>/g, '');
-  
-  // Remove script tags
-  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-  
-  // Escape special characters
-  sanitized = sanitized
+  return input
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;');
-  
-  return sanitized;
 }
 
 export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export function validatePhone(phone: string): boolean {
-  // E.164 format: +[country code][number]
-  const phoneRegex = /^\+[1-9]\d{1,14}$/;
-  return phoneRegex.test(phone);
+  return /^\+[1-9]\d{1,14}$/.test(phone);
 }
 
 export function validateURL(url: string): boolean {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
+  try { new URL(url); return true; } catch { return false; }
 }
 
-// ── Export All ───────────────────────────────────────────────────────────────
-
+// ── Export ───────────────────────────────────────────────────────────────────
 export const Security = {
   CSP_DIRECTIVES,
   getCSPHeader,
@@ -506,4 +377,3 @@ export const Security = {
 };
 
 export default Security;
-

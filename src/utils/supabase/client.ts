@@ -35,6 +35,16 @@ const RETRY_CONFIG = {
 
 const HEALTH_CHECK_INTERVAL = 60_000;
 
+function getBrowserStorage(kind: 'localStorage' | 'sessionStorage'): Storage | undefined {
+  if (typeof window === 'undefined') return undefined;
+
+  try {
+    return window[kind];
+  } catch {
+    return undefined;
+  }
+}
+
 // ── Request queue (used only if a request fires while offline) ────────────────
 const requestQueue: Array<{
   fn: () => Promise<any>;
@@ -105,7 +115,7 @@ const getSupabaseClient = () => {
         autoRefreshToken:   true,
         persistSession:     true,
         detectSessionInUrl: true,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storage: getBrowserStorage('localStorage'),
       },
       global: {
         headers: { 'X-Client-Info': 'wasel-web' },
@@ -159,7 +169,8 @@ export async function optimizedQuery<T>(
 
   if (cache && cacheKey) {
     try {
-      const cached = sessionStorage.getItem(`qc-${cacheKey}`);
+      const storage = getBrowserStorage('sessionStorage');
+      const cached = storage?.getItem(`qc-${cacheKey}`);
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
         if (Date.now() - timestamp < cacheDuration) return data;
@@ -171,7 +182,8 @@ export async function optimizedQuery<T>(
 
   if (cache && cacheKey) {
     try {
-      sessionStorage.setItem(`qc-${cacheKey}`, JSON.stringify({ data: result, timestamp: Date.now() }));
+      const storage = getBrowserStorage('sessionStorage');
+      storage?.setItem(`qc-${cacheKey}`, JSON.stringify({ data: result, timestamp: Date.now() }));
     } catch { /* ignore */ }
   }
   return result;

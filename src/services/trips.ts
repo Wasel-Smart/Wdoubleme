@@ -1,4 +1,13 @@
 import { API_URL, fetchWithRetry, getAuthDetails, publicAnonKey } from './core';
+import {
+  calculateDirectPrice,
+  createDirectTrip,
+  deleteDirectTrip,
+  getDirectDriverTrips,
+  getDirectTripById,
+  searchDirectTrips,
+  updateDirectTrip,
+} from './directSupabase';
 
 export interface TripCreatePayload {
   from: string;
@@ -37,112 +46,187 @@ export interface PriceCalculationResult {
   breakdown?: Record<string, number>;
 }
 
+function canUseEdgeApi(): boolean {
+  return Boolean(API_URL && publicAnonKey);
+}
+
 export const tripsAPI = {
   async createTrip(tripData: TripCreatePayload): Promise<TripSearchResult> {
-    const { token } = await getAuthDetails();
+    const { token, userId } = await getAuthDetails();
 
-    const response = await fetchWithRetry(`${API_URL}/trips`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(tripData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to create trip' }));
-      throw new Error(error.error || 'Failed to create trip');
+    if (!canUseEdgeApi()) {
+      return createDirectTrip(userId, tripData);
     }
 
-    return response.json();
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(tripData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to create trip' }));
+        throw new Error(error.error || 'Failed to create trip');
+      }
+
+      return response.json();
+    } catch {
+      return createDirectTrip(userId, tripData);
+    }
   },
 
   async searchTrips(from?: string, to?: string, date?: string, seats?: number): Promise<TripSearchResult[]> {
+    if (!canUseEdgeApi()) {
+      return searchDirectTrips(from, to, date, seats);
+    }
+
     const params = new URLSearchParams();
     if (from) params.append('from', from);
     if (to) params.append('to', to);
     if (date) params.append('date', date);
     if (seats) params.append('seats', seats.toString());
 
-    const response = await fetchWithRetry(`${API_URL}/trips/search?${params}`, {
-      headers: { Authorization: `Bearer ${publicAnonKey}` },
-    });
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips/search?${params}`, {
+        headers: { Authorization: `Bearer ${publicAnonKey}` },
+      });
 
-    if (!response.ok) throw new Error('Failed to search trips');
-    return response.json();
+      if (!response.ok) {
+        throw new Error('Failed to search trips');
+      }
+
+      return response.json();
+    } catch {
+      return searchDirectTrips(from, to, date, seats);
+    }
   },
 
   async getTripById(tripId: string): Promise<TripSearchResult> {
-    const response = await fetchWithRetry(`${API_URL}/trips/${tripId}`, {
-      headers: { Authorization: `Bearer ${publicAnonKey}` },
-    });
+    if (!canUseEdgeApi()) {
+      const trip = await getDirectTripById(tripId);
+      if (!trip) throw new Error('Failed to fetch trip');
+      return trip;
+    }
 
-    if (!response.ok) throw new Error('Failed to fetch trip');
-    return response.json();
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips/${tripId}`, {
+        headers: { Authorization: `Bearer ${publicAnonKey}` },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch trip');
+      }
+
+      return response.json();
+    } catch {
+      const trip = await getDirectTripById(tripId);
+      if (!trip) throw new Error('Failed to fetch trip');
+      return trip;
+    }
   },
 
   async getDriverTrips(): Promise<TripSearchResult[]> {
     const { token, userId } = await getAuthDetails();
 
-    const response = await fetchWithRetry(`${API_URL}/trips/user/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    if (!canUseEdgeApi()) {
+      return getDirectDriverTrips(userId);
+    }
 
-    if (!response.ok) throw new Error('Failed to fetch driver trips');
-    return response.json();
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch driver trips');
+      }
+
+      return response.json();
+    } catch {
+      return getDirectDriverTrips(userId);
+    }
   },
 
   async updateTrip(tripId: string, updates: TripUpdatePayload): Promise<TripSearchResult> {
     const { token } = await getAuthDetails();
 
-    const response = await fetchWithRetry(`${API_URL}/trips/${tripId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(updates),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to update trip' }));
-      throw new Error(error.error || 'Failed to update trip');
+    if (!canUseEdgeApi()) {
+      return updateDirectTrip(tripId, updates);
     }
 
-    return response.json();
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips/${tripId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to update trip' }));
+        throw new Error(error.error || 'Failed to update trip');
+      }
+
+      return response.json();
+    } catch {
+      return updateDirectTrip(tripId, updates);
+    }
   },
 
   async deleteTrip(tripId: string): Promise<{ success: boolean }> {
     const { token } = await getAuthDetails();
 
-    const response = await fetchWithRetry(`${API_URL}/trips/${tripId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to delete trip' }));
-      throw new Error(error.error || 'Failed to delete trip');
+    if (!canUseEdgeApi()) {
+      return deleteDirectTrip(tripId);
     }
 
-    return response.json();
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips/${tripId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to delete trip' }));
+        throw new Error(error.error || 'Failed to delete trip');
+      }
+
+      return response.json();
+    } catch {
+      return deleteDirectTrip(tripId);
+    }
   },
 
   async publishTrip(tripId: string): Promise<{ success: boolean }> {
     const { token } = await getAuthDetails();
 
-    const response = await fetchWithRetry(`${API_URL}/trips/${tripId}/publish`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to publish trip' }));
-      throw new Error(error.error || 'Failed to publish trip');
+    if (!canUseEdgeApi()) {
+      await updateDirectTrip(tripId, { status: 'active' });
+      return { success: true };
     }
 
-    return response.json();
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips/${tripId}/publish`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to publish trip' }));
+        throw new Error(error.error || 'Failed to publish trip');
+      }
+
+      return response.json();
+    } catch {
+      await updateDirectTrip(tripId, { status: 'active' });
+      return { success: true };
+    }
   },
 
   async calculatePrice(
@@ -151,13 +235,24 @@ export const tripsAPI = {
     distance_km?: number,
     base_price?: number,
   ): Promise<PriceCalculationResult> {
-    const response = await fetchWithRetry(`${API_URL}/trips/calculate-price`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, weight, distance_km, base_price }),
-    });
+    if (!canUseEdgeApi()) {
+      return calculateDirectPrice(type, weight, distance_km, base_price);
+    }
 
-    if (!response.ok) throw new Error('Failed to calculate price');
-    return response.json();
+    try {
+      const response = await fetchWithRetry(`${API_URL}/trips/calculate-price`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, weight, distance_km, base_price }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to calculate price');
+      }
+
+      return response.json();
+    } catch {
+      return calculateDirectPrice(type, weight, distance_km, base_price);
+    }
   },
 };

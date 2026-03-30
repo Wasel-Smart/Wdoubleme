@@ -221,6 +221,14 @@ export class CurrencyService {
     return CurrencyService._instance;
   }
 
+  static getCurrencyConfig(code: SupportedCurrency): CurrencyConfig {
+    return CURRENCIES[code];
+  }
+
+  static formatAmount(amount: number, currency: SupportedCurrency = PLATFORM_CURRENCY): string {
+    return CurrencyService.getInstance().format(amount, currency);
+  }
+
   // ── Preference detection ──────────────────────────────────────────────────
 
   private _detectPreference(): SupportedCurrency {
@@ -234,7 +242,7 @@ export class CurrencyService {
     }
 
     // Infer from browser locale — Jordan is primary, so JOD first.
-    const lang = navigator.language.toLowerCase();
+    const lang = typeof navigator === 'undefined' ? 'ar-jo' : navigator.language.toLowerCase();
     if (lang.startsWith('ar-jo') || lang.startsWith('ar'))  return 'JOD';
     if (lang.startsWith('en-gb'))                            return 'GBP';
     if (lang.startsWith('ar-ae'))                            return 'AED';

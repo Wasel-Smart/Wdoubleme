@@ -27,7 +27,7 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
 
-          // React core — must be its own chunk to maximise cache hits
+          // React core — must be its own chunk for maximum cache hits
           if (
             id.includes('/node_modules/react/') ||
             id.includes('/node_modules/react-dom/') ||
@@ -60,14 +60,17 @@ export default defineConfig({
           // Charts
           if (id.includes('/node_modules/recharts/')) return 'charts';
 
-          // Firebase
-          if (id.includes('/node_modules/firebase/')) return 'firebase';
-
           // Forms
           if (
             id.includes('/node_modules/react-hook-form/') ||
             id.includes('/node_modules/react-day-picker/')
           ) return 'forms';
+
+          // Monitoring
+          if (id.includes('/node_modules/@sentry/')) return 'monitoring';
+
+          // Payments
+          if (id.includes('/node_modules/@stripe/')) return 'payments';
         },
       },
     },

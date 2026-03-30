@@ -1,30 +1,13 @@
-import { defineConfig } from 'vitest/config';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export default defineConfig({
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts'],
-    environmentOptions: {
-      jsdom: {
-        url: 'http://localhost/',
-      },
-    },
-    include: [
-      'tests/**/*.test.ts',
-      'src/tests/accessibility/**/*.test.ts?(x)',
-      'src/tests/unit/**/*.test.ts?(x)',
-      'src/tests/utils/**/*.test.ts?(x)',
-    ],
-  },
-});
-
+/**
+ * REMOVED — vitest.config.mjs is deprecated.
+ *
+ * All Vitest configuration now lives exclusively in vitest.config.ts.
+ * This file is kept only so that any tooling resolution that picks it up
+ * does not silently fail with a missing-module error. It is listed in
+ * .gitignore and should be deleted from the repository index:
+ *
+ *   git rm --cached vitest.config.mjs
+ *
+ * Do NOT add configuration here. Edit vitest.config.ts instead.
+ */
+export { default } from './vitest.config.ts';

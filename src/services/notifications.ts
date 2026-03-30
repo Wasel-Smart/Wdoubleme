@@ -1,4 +1,9 @@
 import { API_URL, fetchWithRetry, getAuthDetails } from './core';
+import {
+  createDirectNotification,
+  getDirectNotifications,
+  markDirectNotificationAsRead,
+} from './directSupabase';
 
 const LOCAL_NOTIFICATION_KEY = 'wasel-local-notifications';
 
@@ -15,6 +20,10 @@ type StoredNotification = {
   created_at: string;
   source?: 'local' | 'server';
 };
+
+function canUseEdgeApi(): boolean {
+  return Boolean(API_URL);
+}
 
 function readLocalNotifications(): StoredNotification[] {
   if (typeof window === 'undefined') return [];
@@ -103,6 +112,17 @@ export const notificationsAPI = {
       return { notifications: sortNotifications(localNotifications.map(normalizeNotification)) };
     }
 
+    if (!canUseEdgeApi()) {
+      try {
+        const serverNotifications = await getDirectNotifications(userId);
+        return {
+          notifications: mergeNotifications(localNotifications, serverNotifications as StoredNotification[]),
+        };
+      } catch {
+        return { notifications: sortNotifications(localNotifications.map(normalizeNotification)) };
+      }
+    }
+
     try {
       const response = await fetchWithRetry(
         `${API_URL}/notifications`,
@@ -110,7 +130,7 @@ export const notificationsAPI = {
       );
 
       if (!response.ok) {
-        return { notifications: sortNotifications(localNotifications.map(normalizeNotification)) };
+        throw new Error('Failed to fetch notifications');
       }
 
       const data = await response.json();
@@ -119,7 +139,14 @@ export const notificationsAPI = {
         notifications: mergeNotifications(localNotifications, serverNotifications),
       };
     } catch {
-      return { notifications: sortNotifications(localNotifications.map(normalizeNotification)) };
+      try {
+        const serverNotifications = await getDirectNotifications(userId);
+        return {
+          notifications: mergeNotifications(localNotifications, serverNotifications as StoredNotification[]),
+        };
+      } catch {
+        return { notifications: sortNotifications(localNotifications.map(normalizeNotification)) };
+      }
     }
   },
 
@@ -127,14 +154,25 @@ export const notificationsAPI = {
     markLocalNotificationAsRead(notificationId);
 
     let token: string | null = null;
+    let userId: string | null = null;
     try {
       const auth = await getAuthDetails();
       token = auth.token;
+      userId = auth.userId;
     } catch {
       return { success: true, source: 'local' };
     }
 
-    if (!token) return { success: true, source: 'local' };
+    if (!token || !userId) return { success: true, source: 'local' };
+
+    if (!canUseEdgeApi()) {
+      try {
+        await markDirectNotificationAsRead(notificationId, userId);
+        return { success: true, source: 'server' };
+      } catch {
+        return { success: false, source: 'server' };
+      }
+    }
 
     try {
       const response = await fetchWithRetry(
@@ -148,7 +186,12 @@ export const notificationsAPI = {
       if (!response.ok) return { success: false, source: 'server' };
       return await response.json();
     } catch {
-      return { success: false, source: 'server' };
+      try {
+        await markDirectNotificationAsRead(notificationId, userId);
+        return { success: true, source: 'server' };
+      } catch {
+        return { success: false, source: 'server' };
+      }
     }
   },
 
@@ -203,6 +246,33 @@ export const notificationsAPI = {
       return { success: true, source: 'local' };
     }
 
+    if (!canUseEdgeApi()) {
+      try {
+        const created = await createDirectNotification({
+          userId,
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          priority: data.priority,
+          action_url: data.action_url,
+        });
+
+        writeLocalNotifications(sortNotifications([
+          {
+            ...localDraft,
+            id: String(created?.id ?? localDraft.id),
+            source: 'server',
+          },
+          ...localNotifications,
+        ]));
+
+        return { success: true, source: 'server' };
+      } catch {
+        writeLocalNotifications(sortNotifications([localDraft, ...localNotifications]));
+        return { success: false, source: 'local' };
+      }
+    }
+
     try {
       const response = await fetchWithRetry(
         `${API_URL}/notifications/send-push`,
@@ -233,8 +303,30 @@ export const notificationsAPI = {
 
       return { success: true, source: 'server' };
     } catch {
-      writeLocalNotifications(sortNotifications([localDraft, ...localNotifications]));
-      return { success: false, source: 'local' };
+      try {
+        const created = await createDirectNotification({
+          userId,
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          priority: data.priority,
+          action_url: data.action_url,
+        });
+
+        writeLocalNotifications(sortNotifications([
+          {
+            ...localDraft,
+            id: String(created?.id ?? localDraft.id),
+            source: 'server',
+          },
+          ...localNotifications,
+        ]));
+
+        return { success: true, source: 'server' };
+      } catch {
+        writeLocalNotifications(sortNotifications([localDraft, ...localNotifications]));
+        return { success: false, source: 'local' };
+      }
     }
   },
 };

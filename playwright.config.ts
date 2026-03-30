@@ -1,26 +1,33 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Playwright E2E configuration.
+ * Test specs live in ./e2e/ (NOT ./src/tests/e2e — that dir didn't exist).
+ * Run:  npx playwright test
+ * UI:   npx playwright test --ui
+ */
 export default defineConfig({
-  testDir: './src/tests/e2e',
-  fullyParallel: true,
+  testDir: './e2e',
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: [
     ['list'],
-    ['html', { open: 'never' }],
+    ['html', { open: 'never', outputFolder: 'playwright-report' }],
   ],
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    testIdAttribute: 'data-testid',
   },
   webServer: {
-    command: 'npx vite preview --host 127.0.0.1 --port 4173',
+    command: 'cmd /c npm run build && npx vite preview --host 127.0.0.1 --port 4173',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 240_000,
   },
   projects: [
     {
@@ -30,6 +37,10 @@ export default defineConfig({
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'safari',
+      use: { ...devices['Desktop Safari'] },
     },
   ],
 });

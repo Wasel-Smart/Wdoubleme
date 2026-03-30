@@ -4,7 +4,6 @@
  * Password strength · social hints · bilingual · mobile-responsive
  */
 import { useState, useEffect, useRef } from 'react';
-import type React from 'react';
 import { useSearchParams } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -60,8 +59,9 @@ function pwStrength(pw: string): { score: number; label: string; color: string }
 
 // ── Dark floating input ───────────────────────────────────────────────────────
 function DarkInput({
-  label, labelAr, type='text', value, onChange, placeholder, icon, hint,
+  id, label, labelAr, type='text', value, onChange, placeholder, icon, hint,
 }: {
+  id: string;
   label:string; labelAr?:string; type?:string; value:string;
   onChange:(v:string)=>void; placeholder?:string; icon?:string; hint?:React.ReactNode;
 }) {
@@ -73,7 +73,7 @@ function DarkInput({
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:7 }}>
-        <label style={{ fontSize:'0.76rem', fontWeight:700, color:C.sub, fontFamily:C.F }}>{label}</label>
+        <label htmlFor={id} style={{ fontSize:'0.76rem', fontWeight:700, color:C.sub, fontFamily:C.F }}>{label}</label>
         {labelAr && <span style={{ fontSize:'0.7rem', color:C.muted, fontFamily:C.FA }}>{labelAr}</span>}
       </div>
       <div style={{
@@ -85,6 +85,8 @@ function DarkInput({
       }}>
         {icon && <span style={{ fontSize:'1rem', flexShrink:0 }}>{icon}</span>}
         <input
+          id={id}
+          aria-label={label}
           type={inputType} value={value}
           onChange={e => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -108,7 +110,8 @@ type Tab = 'signin' | 'register';
 
 export default function WaselAuth() {
   const [params] = useSearchParams();
-  const initialTab = params.get('tab') === 'register' ? 'register' : 'signin';
+  const rawTab = params.get('tab')?.toLowerCase();
+  const initialTab = rawTab === 'register' || rawTab === 'signup' ? 'register' : 'signin';
 
   const [tab,      setTab]      = useState<Tab>(initialTab);
   const [email,    setEmail]    = useState('');
@@ -323,6 +326,7 @@ export default function WaselAuth() {
           <div style={{ display:'flex', background:C.card, borderRadius:R.lg, padding:4, marginBottom:32, border:`1px solid ${C.border}` }}>
             {(['signin','register'] as Tab[]).map(t => (
               <motion.button key={t} onClick={() => { setTab(t); setErr(''); }}
+                aria-label={t === 'signin' ? 'Switch to sign in' : 'Switch to create account'}
                 whileTap={{ scale:0.97 }}
                 style={{
                   flex:1, height:42, borderRadius:R.md, border:'none', cursor:'pointer',
@@ -373,12 +377,13 @@ export default function WaselAuth() {
               <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
                 {tab === 'register' && (
-                  <DarkInput label="Full Name" labelAr="الاسم الكامل" value={name} onChange={setName} placeholder="Ahmad Al-Rashid" icon="👤" />
+                  <DarkInput id="full-name" label="Full Name" labelAr="الاسم الكامل" value={name} onChange={setName} placeholder="Ahmad Al-Rashid" icon="👤" />
                 )}
 
-                <DarkInput label="Email" labelAr="البريد الإلكتروني" type="email" value={email} onChange={setEmail} placeholder="you@example.com" icon="📧" />
+                <DarkInput id="auth-email" label="Email" labelAr="البريد الإلكتروني" type="email" value={email} onChange={setEmail} placeholder="you@example.com" icon="📧" />
 
                 <DarkInput
+                  id="auth-password"
                   label="Password" labelAr="كلمة المرور" type="password" value={password} onChange={setPassword}
                   placeholder={tab === 'register' ? 'Min. 6 characters' : 'Enter password'}
                   icon="����"
@@ -395,7 +400,7 @@ export default function WaselAuth() {
                 />
 
                 {tab === 'register' && (
-                  <DarkInput label="Phone (optional)" labelAr="الهاتف (اختياري)" type="tel" value={phone} onChange={setPhone} placeholder="+962 79 123 4567" icon="📱" />
+                  <DarkInput id="auth-phone" label="Phone (optional)" labelAr="الهاتف (اختياري)" type="tel" value={phone} onChange={setPhone} placeholder="+962 79 123 4567" icon="📱" />
                 )}
 
                 {tab === 'signin' && (
@@ -414,6 +419,7 @@ export default function WaselAuth() {
                 <motion.button
                   whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
                   onClick={tab === 'signin' ? handleSignIn : handleRegister}
+                  aria-label={tab === 'signin' ? 'Submit sign in' : 'Submit create account'}
                   disabled={loading || success}
                   style={{
                     height:50, borderRadius:R.md, border:'none', cursor:'pointer',

@@ -26,11 +26,11 @@ import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLocalAuth, type WaselUser } from '../../contexts/LocalAuth';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { walletApi } from '../../services/walletApi';
-import type { WalletData, InsightsData } from '../../services/walletApi';
+import { walletApi, type WalletData, type InsightsData } from '../../services/walletApi';
 import { WaselColors } from '../../tokens/wasel-tokens';
 import { getConfig } from '../../utils/env';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { useIframeSafeNavigate } from '../../hooks/useIframeSafeNavigate';
 import {
   TransactionRow as SharedTransactionRow,
   ActionModal as SharedActionModal,
@@ -280,11 +280,13 @@ export function WalletDashboard() {
   const { user: localUser, updateUser } = useLocalAuth();
   const { language } = useLanguage();
   const { enableDemoAccount } = getConfig();
+  const navigate = useIframeSafeNavigate();
   const isRTL = language === 'ar';
   const t = txt[isRTL ? 'ar' : 'en'];
   const effectiveUserId = user?.id ?? localUser?.id ?? 'demo-wallet-user';
-  const isDemoWallet = enableDemoAccount && (!WALLET_BACKEND_READY || localUser?.backendMode === 'demo' || !user?.id);
+  const isDemoWallet = enableDemoAccount && Boolean(localUser) && (!WALLET_BACKEND_READY || localUser?.backendMode === 'demo');
   const walletUnavailable = !WALLET_BACKEND_READY && !enableDemoAccount;
+  const shouldRedirectToAuth = !localUser;
 
   const [tab, setTab] = useState('overview');
   const [walletData, setWalletData] = useState<WalletData | null>(null);
@@ -317,6 +319,13 @@ export function WalletDashboard() {
   const [autoTopUpThreshold, setAutoTopUpThreshold] = useState('5');
 
   const fetchWallet = useCallback(async () => {
+    if (shouldRedirectToAuth) {
+      setWalletData(null);
+      setInsights(null);
+      setLoading(false);
+      return;
+    }
+
     if (isDemoWallet) {
       const demoWallet = createDemoWalletData(localUser);
       setWalletData(demoWallet);
@@ -348,9 +357,14 @@ export function WalletDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [effectiveUserId, enableDemoAccount, isDemoWallet, isRTL, localUser]);
+  }, [effectiveUserId, enableDemoAccount, isDemoWallet, isRTL, localUser, shouldRedirectToAuth]);
 
   const fetchInsights = useCallback(async () => {
+    if (shouldRedirectToAuth) {
+      setInsights(null);
+      return;
+    }
+
     if (isDemoWallet) {
       if (walletData) setInsights(createDemoInsights(walletData));
       return;
@@ -365,7 +379,13 @@ export function WalletDashboard() {
         setInsights(createDemoInsights(walletData));
       }
     }
-  }, [effectiveUserId, enableDemoAccount, isDemoWallet, walletData]);
+  }, [effectiveUserId, enableDemoAccount, isDemoWallet, walletData, shouldRedirectToAuth]);
+
+  useEffect(() => {
+    if (shouldRedirectToAuth) {
+      navigate('/app/auth?returnTo=/app/wallet');
+    }
+  }, [navigate, shouldRedirectToAuth]);
 
   useEffect(() => { fetchWallet(); }, [fetchWallet]);
   useEffect(() => { if (tab === 'insights') fetchInsights(); }, [tab, fetchInsights]);
@@ -402,7 +422,7 @@ export function WalletDashboard() {
         updateUser({ balance: next.balance });
         return next;
       });
-      toast.success(isRTL ? `ØªÙ… Ø´Ø­Ù† ${amt} Ø¯ÙŠÙ†Ø§Ø±` : `JOD ${amt} added successfully`);
+      toast.success(isRTL ? `تم شحن ${amt} دينار` : `JOD ${amt} added successfully`);
       setShowTopUp(false);
       setTopUpAmount('');
       return;
@@ -636,6 +656,17 @@ export function WalletDashboard() {
   const bal = walletData?.balance ?? 0;
   const pending = walletData?.pendingBalance ?? 0;
   const rewardsBal = walletData?.rewardsBalance ?? 0;
+
+  if (shouldRedirectToAuth) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Lock className="w-12 h-12 text-muted-foreground/60" />
+        <p className="text-muted-foreground text-sm">
+          {isRTL ? 'جارٍ تحويلك إلى تسجيل الدخول...' : 'Redirecting to sign in...'}
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

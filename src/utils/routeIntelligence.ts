@@ -389,8 +389,8 @@ export function optimizeMultiStopRoute(
  * High utilization = good for driver and platform.
  */
 export function scoreSeatUtilization(
-  totalSeats: number,
   bookedSeats: number,
+  totalSeats: number,
 ): number {
   if (totalSeats === 0) return 0;
   const rate = bookedSeats / totalSeats;
@@ -409,10 +409,24 @@ export function scoreSeatUtilization(
  * Target: 10+ trips/week per route, 1:10 driver-to-passenger ratio.
  */
 export function calculateLiquidityHealth(
-  availableTrips: number,
-  totalSeats: number,
-  bookedSeats: number,
-): LiquidityMetrics & { routeId: string; averagePriceJOD: number } {
+  availableTripsOrMetrics: number | {
+    activeTrips: number;
+    pendingRequests: number;
+    averageMatchTime: number;
+  },
+  totalSeats?: number,
+  bookedSeats?: number,
+): (LiquidityMetrics & { routeId: string; averagePriceJOD: number }) | number {
+  if (typeof availableTripsOrMetrics === 'object') {
+    const { activeTrips, pendingRequests, averageMatchTime } = availableTripsOrMetrics;
+    const balanceRatio = pendingRequests === 0 ? activeTrips : Math.min(activeTrips, pendingRequests) / Math.max(activeTrips, pendingRequests);
+    const speedScore = Math.max(0, 100 - averageMatchTime);
+    return Math.round((balanceRatio * 70) + (speedScore * 0.3));
+  }
+
+  const availableTrips = availableTripsOrMetrics;
+  const safeTotalSeats = totalSeats ?? 0;
+  const safeBookedSeats = bookedSeats ?? 0;
   const utilizationRate = totalSeats > 0 ? bookedSeats / totalSeats : 0;
   let healthScore: number;
   let status: LiquidityMetrics['status'];
@@ -437,8 +451,8 @@ export function calculateLiquidityHealth(
   return {
     routeId: '',
     availableTrips,
-    bookedSeats,
-    totalSeats,
+    bookedSeats: safeBookedSeats,
+    totalSeats: safeTotalSeats,
     utilizationRate,
     averagePriceJOD: 0,
     healthScore,
@@ -527,6 +541,40 @@ export function calculatePrayerStops(
   }
 
   return stops;
+}
+
+export function scoreTripMatch(
+  trip: TripSummary,
+  request: PassengerRequest,
+): number {
+  const score = scoreTripForPassenger(trip, request);
+  const routeMismatch =
+    trip.originCity.toLowerCase() !== request.originCity.toLowerCase() ||
+    trip.destinationCity.toLowerCase() !== request.destinationCity.toLowerCase();
+  const genderConflict =
+    scoreGenderCompatibility(trip.genderPreference, request.genderPreference) === 0;
+
+  if (genderConflict) {
+    return Math.min(score.overall, 40);
+  }
+
+  if (routeMismatch) {
+    return Math.min(score.overall, 65);
+  }
+
+  return score.overall;
+}
+
+export function calculateDetourTolerance(routeDistanceKm: number): number {
+  if (routeDistanceKm <= 0) return 0;
+  return Math.round(Math.max(10, routeDistanceKm * 0.12));
+}
+
+export function suggestPrayerStops(
+  departureISO: string,
+  totalDurationMin: number,
+): PrayerStop[] {
+  return calculatePrayerStops(departureISO, totalDurationMin, 'JO');
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import {
+  checkSupabaseConnection,
   supabase as supabaseClient,
   supabaseUrl,
 } from '../utils/supabase/client';
@@ -31,10 +32,23 @@ export interface AvailabilitySnapshot {
 
 type AvailabilityListener = (snapshot: AvailabilitySnapshot) => void;
 
-let edgeFunctionAvailable = true;
-let backendStatus: BackendStatus = API_URL ? 'unknown' : 'degraded';
+let edgeFunctionAvailable = Boolean(supabaseClient || API_URL);
+let backendStatus: BackendStatus = supabaseClient ? 'unknown' : 'degraded';
 let lastCheckedAt: number | null = null;
 const availabilityListeners = new Set<AvailabilityListener>();
+
+async function markSupabaseHealth(): Promise<boolean> {
+  if (!supabaseClient) {
+    setEdgeFunctionAvailability(false);
+    setBackendStatus(getNetworkOnline() ? 'degraded' : 'offline');
+    return false;
+  }
+
+  const healthy = await checkSupabaseConnection(true).catch(() => false);
+  setEdgeFunctionAvailability(healthy);
+  setBackendStatus(healthy ? 'healthy' : getNetworkOnline() ? 'degraded' : 'offline');
+  return healthy;
+}
 
 function getNetworkOnline(): boolean {
   if (typeof navigator === 'undefined') {
@@ -125,14 +139,13 @@ export function markEdgeFunctionUnavailable(): void {
 }
 
 export async function probeBackendHealth(timeout = 8_000): Promise<AvailabilitySnapshot> {
-  if (!API_URL || !publicAnonKey) {
-    setBackendStatus('degraded');
-    setEdgeFunctionAvailability(false);
+  if (!getNetworkOnline()) {
+    setBackendStatus('offline');
     return buildAvailabilitySnapshot();
   }
 
-  if (!getNetworkOnline()) {
-    setBackendStatus('offline');
+  if (!API_URL || !publicAnonKey) {
+    await markSupabaseHealth();
     return buildAvailabilitySnapshot();
   }
 
@@ -145,13 +158,12 @@ export async function probeBackendHealth(timeout = 8_000): Promise<AvailabilityS
     if (response.ok) {
       setEdgeFunctionAvailability(true);
       setBackendStatus('healthy');
-    } else {
+    } else if (!(await markSupabaseHealth())) {
       setEdgeFunctionAvailability(false);
       setBackendStatus('degraded');
     }
   } catch {
-    setEdgeFunctionAvailability(false);
-    setBackendStatus(getNetworkOnline() ? 'degraded' : 'offline');
+    await markSupabaseHealth();
   }
 
   return buildAvailabilitySnapshot();
@@ -162,7 +174,12 @@ let serverWarm = false;
 const MAX_WARMUP_ATTEMPTS = 3;
 
 export async function warmUpServer(): Promise<void> {
-  if (serverWarm || !API_URL || !publicAnonKey) {
+  if (serverWarm) {
+    return;
+  }
+
+  if (!API_URL || !publicAnonKey) {
+    serverWarm = await markSupabaseHealth();
     return;
   }
 
@@ -182,6 +199,11 @@ export async function warmUpServer(): Promise<void> {
     }
   } catch {
     // The retry path below handles the final state.
+  }
+
+  if (await markSupabaseHealth()) {
+    serverWarm = true;
+    return;
   }
 
   if (warmUpAttempts < MAX_WARMUP_ATTEMPTS) {

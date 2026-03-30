@@ -1,4 +1,5 @@
 import { API_URL, fetchWithRetry, getAuthDetails } from './core';
+import { createDirectPackage, getDirectPackageByTrackingId } from './directSupabase';
 import { tripsAPI } from './trips';
 
 export interface PostedRide {
@@ -363,8 +364,9 @@ export async function createConnectedPackage(input: {
   };
 
   try {
+    const { token, userId } = await getAuthDetails();
+
     if (API_URL) {
-      const { token } = await getAuthDetails();
       const response = await fetchWithRetry(`${API_URL}/packages`, {
         method: 'POST',
         headers: {
@@ -380,6 +382,26 @@ export async function createConnectedPackage(input: {
         savePackages([created], getConnectedPackages());
         return created;
       }
+    } else {
+      const createdDirect = await createDirectPackage({
+        userId,
+        trackingNumber: pkg.trackingId,
+        from: pkg.from,
+        to: pkg.to,
+        weightKg: parseWeight(pkg.weight),
+        description: pkg.note,
+        recipientName: pkg.recipientName,
+        recipientPhone: pkg.recipientPhone,
+      });
+
+      const created = normalizeServerPackage(createdDirect as Record<string, unknown>, {
+        ...pkg,
+        from: String(createdDirect.origin_name ?? pkg.from),
+        to: String(createdDirect.destination_name ?? pkg.to),
+        weight: sanitizeWeight(String(createdDirect.weight_kg ?? pkg.weight)),
+      });
+      savePackages([created], getConnectedPackages());
+      return created;
     }
   } catch {
     // Fall back to local storage below.
@@ -397,13 +419,32 @@ export async function getPackageByTrackingId(trackingId: string): Promise<Packag
   if (local) return local;
 
   try {
-    const response = await fetchWithRetry(`${API_URL}/packages/track/${encodeURIComponent(normalizedTrackingId)}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) return null;
-    const server = await response.json();
+    let server: Record<string, unknown> | null = null;
+
+    if (API_URL) {
+      const response = await fetchWithRetry(`${API_URL}/packages/track/${encodeURIComponent(normalizedTrackingId)}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) return null;
+      server = await response.json();
+    } else {
+      const direct = await getDirectPackageByTrackingId(normalizedTrackingId);
+      if (!direct) return null;
+      server = {
+        ...direct,
+        id: direct.id,
+        tracking_code: direct.tracking_number,
+        from: direct.origin_name ?? direct.origin_location,
+        to: direct.destination_name ?? direct.destination_location,
+        weight: direct.weight_kg,
+        description: direct.description,
+        recipient_name: direct.receiver_name,
+        recipient_phone: direct.receiver_phone,
+      };
+    }
+
     if (!server) return null;
 
     const fallback: PackageRequest = {

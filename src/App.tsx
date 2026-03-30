@@ -20,7 +20,7 @@ import {
   initPerformanceMonitoring,
 } from './utils/performance';
 import { DEFAULT_QUERY_OPTIONS } from './utils/performance/cacheStrategy';
-import { waselRouter } from './wasel-routes';
+import { waselRouter } from './router';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -59,17 +59,13 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
       'setupMessageChannel',
     ];
 
-    if (ignoredPatterns.some((pattern) => message.includes(pattern))) {
-      return;
-    }
+    if (ignoredPatterns.some((pattern) => message.includes(pattern))) return;
 
     console.error('[Wasel ErrorBoundary]', message, info?.componentStack ?? '');
   }
 
   render() {
-    if (!this.state.hasError) {
-      return this.props.children;
-    }
+    if (!this.state.hasError) return this.props.children;
 
     return (
       <div
@@ -85,36 +81,14 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
           textAlign: 'center',
         }}
       >
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>!</div>
-        <h2
-          style={{
-            fontSize: '1.3rem',
-            fontWeight: 800,
-            color: '#0B1D45',
-            marginBottom: 8,
-          }}
-        >
+        <div style={{ fontSize: '3rem', marginBottom: 16 }}>⚠️</div>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0B1D45', marginBottom: 8 }}>
           Something went wrong
         </h2>
-        <p
-          style={{
-            color: '#8A9ABD',
-            fontSize: '0.875rem',
-            marginBottom: 24,
-            maxWidth: 360,
-          }}
-        >
+        <p style={{ color: '#8A9ABD', fontSize: '0.875rem', marginBottom: 24, maxWidth: 360 }}>
           {this.state.error || 'An unexpected error occurred.'}
         </p>
-        <p
-          style={{
-            color: '#8A9ABD',
-            fontSize: '0.825rem',
-            marginBottom: 20,
-            maxWidth: 420,
-            lineHeight: 1.6,
-          }}
-        >
+        <p style={{ color: '#8A9ABD', fontSize: '0.825rem', marginBottom: 20, maxWidth: 420, lineHeight: 1.6 }}>
           Refresh the page or try again. If the issue continues, return to the home screen and restart the flow.
         </p>
         <button
@@ -149,10 +123,7 @@ function AppRuntimeCoordinator() {
     const syncOnlineState = () => {
       const online = typeof navigator === 'undefined' ? true : navigator.onLine;
       onlineManager.setOnline(online);
-
-      if (online) {
-        void probeBackendHealth();
-      }
+      if (online) void probeBackendHealth();
     };
 
     syncOnlineState();
@@ -164,7 +135,6 @@ function AppRuntimeCoordinator() {
 
     return () => {
       stopPolling();
-
       if (typeof window !== 'undefined') {
         window.removeEventListener('online', syncOnlineState);
         window.removeEventListener('offline', syncOnlineState);
@@ -177,10 +147,7 @@ function AppRuntimeCoordinator() {
 
 export default function App() {
   const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: DEFAULT_QUERY_OPTIONS,
-      }),
+    () => new QueryClient({ defaultOptions: DEFAULT_QUERY_OPTIONS }),
   );
 
   return (

@@ -47,7 +47,7 @@ npm run dev
 | `npm run test` | Run unit tests (Vitest) |
 | `npm run test:e2e` | Run end-to-end tests (Playwright) |
 | `npm run type-check` | TypeScript check only |
-| `npm run verify` | Full verification: types + tests + build |
+| `npm run verify` | Full verification: types + unit tests + build + E2E |
 
 ---
 

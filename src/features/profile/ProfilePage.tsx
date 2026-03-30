@@ -293,7 +293,7 @@ export default function ProfilePage() {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      showToast(ar ? 'ÙŠØ±Ø¬Ù‰ Ø§Ø®ØªÙŠØ§Ø± ØµÙˆØ±Ø© ØµØ§Ù„Ø­Ø©' : 'Please choose a valid image');
+      showToast(ar ? 'يرجى اختيار صورة صالحة' : 'Please choose a valid image');
       return;
     }
 
@@ -301,17 +301,17 @@ export default function ProfilePage() {
     reader.onload = async () => {
       const avatarUrl = typeof reader.result === 'string' ? reader.result : '';
       if (!avatarUrl) {
-        showToast(ar ? 'ØªØ¹Ø°Ø± ØªØ¬Ù‡ÙŠØ² Ø§Ù„ØµÙˆØ±Ø©' : 'Unable to process that image');
+        showToast(ar ? 'تعذر تجهيز الصورة' : 'Unable to process that image');
         return;
       }
 
       const { error } = await updateProfile({ avatar_url: avatarUrl });
       if (error) {
-        showToast(ar ? 'ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„ØµÙˆØ±Ø© Ø­Ø§Ù„ÙŠØ§Ù‹' : 'Unable to update your photo right now');
+        showToast(ar ? 'تعذر تحديث الصورة حالياً' : 'Unable to update your photo right now');
         return;
       }
 
-      showToast(ar ? 'ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„ØµÙˆØ±Ø© Ø§Ù„Ø´Ø®ØµÙŠØ©' : 'Profile photo updated');
+      showToast(ar ? 'تم تحديث الصورة الشخصية' : 'Profile photo updated');
     };
     reader.readAsDataURL(file);
     event.target.value = '';

@@ -481,7 +481,6 @@ function WaselMapCompact({
       mapRef.current = null;
       drawnLayersRef.current = [];
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Draw route/markers whenever inputs change.
@@ -656,7 +655,7 @@ function WaselMapCompact({
   );
 }
 
-export function WaselMap(props: WaselMapProps) {
+function WaselMapFull(props: WaselMapProps) {
   const {
     center = { lat: 31.9539, lng: 35.9106 }, // Amman
     zoom = 13,
@@ -672,17 +671,6 @@ export function WaselMap(props: WaselMapProps) {
     compact = false,
   } = props;
 
-  if (compact) {
-    return (
-      <WaselMapCompact
-        center={center}
-        height={height}
-        className={className}
-        route={route}
-        markers={markers}
-      />
-    );
-  }
   const containerRef  = useRef<HTMLDivElement>(null);
   const mapDivRef     = useRef<HTMLDivElement>(null);
   const mapRef        = useRef<any>(null);
@@ -1045,7 +1033,6 @@ export function WaselMap(props: WaselMapProps) {
       mapRef.current = null;
       initDone.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ── Map type switcher ── */
@@ -1223,7 +1210,7 @@ export function WaselMap(props: WaselMapProps) {
                     <span className="text-[#04ADBF] text-xs font-bold uppercase tracking-widest">Live</span>
                     <Wifi className="w-3 h-3 text-[#04ADBF]" />
                   </div>
-                  {liveLocation.speed != null && (
+                  {liveLocation.speed !== null && liveLocation.speed !== undefined && (
                     <div className="flex items-end gap-1">
                       <span className="text-3xl font-black text-white leading-none">
                         {Math.round((liveLocation.speed ?? 0) * 3.6)}
@@ -1231,7 +1218,7 @@ export function WaselMap(props: WaselMapProps) {
                       <span className="text-[#8590a2] text-xs mb-0.5">km/h</span>
                     </div>
                   )}
-                  {liveLocation.accuracy != null && (
+                  {liveLocation.accuracy !== null && liveLocation.accuracy !== undefined && (
                     <p className="text-[#5a6475] text-xs">±{Math.round(liveLocation.accuracy)}m accuracy</p>
                   )}
                   <p className="text-[#5a6475] text-xs font-mono">
@@ -1383,6 +1370,22 @@ export function WaselMap(props: WaselMapProps) {
       )}
     </div>
   );
+}
+
+export function WaselMap(props: WaselMapProps) {
+  if (props.compact) {
+    return (
+      <WaselMapCompact
+        center={props.center}
+        height={props.height}
+        className={props.className}
+        route={props.route}
+        markers={props.markers}
+      />
+    );
+  }
+
+  return <WaselMapFull {...props} />;
 }
 
 /* ─── Convenience re-export so old imports keep working ──────────────── */
