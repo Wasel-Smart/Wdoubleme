@@ -1,116 +1,58 @@
-/**
- * Safe environment variable access utility
- * Prevents errors when import.meta.env is undefined
- */
+type EnvSource = Record<string, string | undefined>;
 
-/**
- * Safely get an environment variable
- * @param key - The environment variable key
- * @param defaultValue - Default value if not found
- * @returns The environment variable value or default
- */
-export function getEnv(key: string, defaultValue: string = ''): string {
-  try {
-    if (typeof import.meta === 'undefined' || typeof import.meta.env === 'undefined') {
-      return defaultValue;
-    }
-    return (import.meta.env[key] as string) || defaultValue;
-  } catch (error) {
-    console.warn(`Failed to access environment variable: ${key}`, error);
-    return defaultValue;
-  }
+function readEnvSource(): EnvSource {
+  const importMetaEnv =
+    typeof import.meta !== 'undefined' && typeof import.meta.env === 'object'
+      ? (import.meta.env as EnvSource)
+      : {};
+
+  const processEnv =
+    typeof process !== 'undefined' && typeof process.env === 'object'
+      ? (process.env as EnvSource)
+      : {};
+
+  return { ...processEnv, ...importMetaEnv };
 }
 
-/**
- * Check if we're in production mode
- */
-export function isProd(): boolean {
-  try {
-    return typeof import.meta !== 'undefined' && 
-           typeof import.meta.env !== 'undefined' && 
-           import.meta.env.PROD === true;
-  } catch {
-    return false;
-  }
+export function getEnv(key: string, fallback = ''): string {
+  const value = readEnvSource()[key];
+  return typeof value === 'string' && value.length > 0 ? value : fallback;
 }
 
-/**
- * Check if we're in development mode
- */
-export function isDev(): boolean {
-  try {
-    return typeof import.meta !== 'undefined' && 
-           typeof import.meta.env !== 'undefined' && 
-           import.meta.env.DEV === true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Get the current mode (development, production, etc.)
- */
-export function getMode(): string {
-  try {
-    if (typeof import.meta !== 'undefined' && typeof import.meta.env !== 'undefined') {
-      return import.meta.env.MODE || 'development';
-    }
-    return 'development';
-  } catch {
-    return 'development';
-  }
-}
-
-/**
- * Check if an environment variable is set
- */
 export function hasEnv(key: string): boolean {
-  try {
-    return typeof import.meta !== 'undefined' && 
-           typeof import.meta.env !== 'undefined' && 
-           !!import.meta.env[key];
-  } catch {
-    return false;
-  }
+  return getEnv(key).length > 0;
 }
 
-/**
- * Get all common environment variables
- */
 export function getConfig() {
+  const appUrl = getEnv('VITE_APP_URL', 'http://localhost:3000');
+  const supportWhatsAppNumber = getEnv('VITE_SUPPORT_WHATSAPP_NUMBER')
+    .replace(/[^\d+]/g, '')
+    .trim();
+  const authCallbackPath = getEnv('VITE_AUTH_CALLBACK_PATH', '/app/auth/callback');
+  const enableDemoAccount = getEnv('VITE_ENABLE_DEMO_DATA', 'false').toLowerCase() === 'true';
+
   return {
-    // Mode
-    mode: getMode(),
-    isProd: isProd(),
-    isDev: isDev(),
-    
-    // Supabase
-    supabaseUrl: getEnv('VITE_SUPABASE_URL'),
-    supabaseAnonKey: getEnv('VITE_SUPABASE_ANON_KEY'),
-    
-    // Google Maps
-    googleMapsApiKey: getEnv('VITE_GOOGLE_MAPS_API_KEY'),
-    
-    // Stripe
-    stripePublishableKey: getEnv('VITE_STRIPE_PUBLISHABLE_KEY'),
-    
-    // Firebase
-    firebaseApiKey: getEnv('VITE_FIREBASE_API_KEY'),
-    firebaseAuthDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN'),
-    firebaseProjectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
-    firebaseStorageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
-    firebaseMessagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
-    firebaseAppId: getEnv('VITE_FIREBASE_APP_ID'),
-    firebaseVapidKey: getEnv('VITE_FIREBASE_VAPID_KEY'),
-    
-    // Sentry
-    sentryDsn: getEnv('VITE_SENTRY_DSN'),
-    
-    // Analytics
-    gaMeasurementId: getEnv('VITE_GA_MEASUREMENT_ID'),
-    
-    // App
-    appUrl: getEnv('VITE_APP_URL', 'http://localhost:5173'),
     appName: getEnv('VITE_APP_NAME', 'Wasel'),
+    appUrl,
+    supportWhatsAppNumber,
+    authCallbackPath: authCallbackPath.startsWith('/') ? authCallbackPath : `/${authCallbackPath}`,
+    enableDemoAccount,
+    isProd: getEnv('NODE_ENV') === 'production',
+    isDev: getEnv('NODE_ENV', 'development') !== 'production',
   };
+}
+
+export function getAuthCallbackUrl(origin?: string): string {
+  const { appUrl, authCallbackPath } = getConfig();
+  const base = (origin || appUrl || 'http://localhost:3000').replace(/\/$/, '');
+  return `${base}${authCallbackPath}`;
+}
+
+export function getWhatsAppSupportUrl(message = 'Hi Wasel'): string {
+  const { supportWhatsAppNumber } = getConfig();
+  if (!supportWhatsAppNumber) {
+    return '';
+  }
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${supportWhatsAppNumber.replace(/^\+/, '')}?text=${encodedMessage}`;
 }

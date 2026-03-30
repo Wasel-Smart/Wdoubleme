@@ -4,18 +4,18 @@
  * Brand Story:
  *   One-way and round-trip are the two core trip modes
  *
- * Weaknesses → Strengths applied:
- *  ✅ Quick Actions shortcut row — prominent, 2×2 on mobile, 4-col on desktop
- *  ✅ Currency switcher on balance (uses full CurrencyService)
- *  ✅ Arabic content — every label bilingual in Jordanian dialect
- *  ✅ Mobile 375px — stats use min-width, no overflow; single-col below 480px
- *  ✅ Pull-to-refresh manual reload button
- *  ✅ Skeleton loaders while stats are "loading"
- *  ✅ SOS button triggers real tel: phone call
- *  ✅ Trust score formula explained in expandable panel
- *  ✅ One-Way / Round-Trip toggle as the hero brand concept
- *  ✅ Token color #040C18 everywhere (no #020810 drift)
- *  ✅ Progress bars use border-radius: 9999px (R.full)
+ * Weaknesses ? Strengths applied:
+ *  ? Quick Actions shortcut row � prominent, 2�2 on mobile, 4-col on desktop
+ *  ? Currency switcher on balance (uses full CurrencyService)
+ *  ? Arabic content � every label bilingual in Jordanian dialect
+ *  ? Mobile 375px � stats use min-width, no overflow; single-col below 480px
+ *  ? Pull-to-refresh manual reload button
+ *  ? Skeleton loaders while stats are "loading"
+ *  ? SOS button triggers real tel: phone call
+ *  ? Trust score formula explained in expandable panel
+ *  ? One-Way / Round-Trip toggle as the hero brand concept
+ *  ? Token color #040C18 everywhere (no #020810 drift)
+ *  ? Progress bars use border-radius: 9999px (R.full)
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -35,7 +35,7 @@ import { CurrencyService, type SupportedCurrency, SUPPORTED_CURRENCY_CODES } fro
 import { useLiveUserStats, useLivePlatformStats } from '../../services/liveDataService';
 import logoImage from 'figma:asset/4a69b221f1cb55f2d763abcfb9817a7948272c0c.png';
 
-/* ── Design tokens (unified — no drift from #040C18) ─────────────────────── */
+/* -- Design tokens (unified � no drift from #040C18) ----------------------- */
 const C = {
   bg:        '#040C18',
   card:      '#0A1628',
@@ -60,17 +60,17 @@ const C = {
 const F = "-apple-system, BlinkMacSystemFont, 'Inter', 'Cairo', 'Tajawal', sans-serif";
 const glass = (op = 0.68) => `rgba(10,22,40,${op})`;
 
-/* ── Popular Jordan routes ────────────────────────��──────────────────────── */
+/* -- Popular Jordan routes ------------------------??------------------------ */
 const POPULAR_ROUTES = [
-  { from: 'Amman', fromAr: 'عمّان', to: 'Aqaba',    toAr: 'العقبة',      dist: 330, priceJod: 8,  icon: '🏖️', color: C.cyan   },
-  { from: 'Amman', fromAr: 'عمّان', to: 'Irbid',    toAr: 'إربد',        dist: 85,  priceJod: 3,  icon: '🎓', color: C.green  },
-  { from: 'Amman', fromAr: 'عمّان', to: 'Dead Sea', toAr: 'البحر الميت', dist: 60,  priceJod: 5,  icon: '🌊', color: '#0EA5E9' },
-  { from: 'Amman', fromAr: 'عمّان', to: 'Petra',    toAr: 'البتراء',     dist: 250, priceJod: 12, icon: '🏛️', color: C.gold   },
-  { from: 'Amman', fromAr: 'عمّان', to: 'Wadi Rum', toAr: 'وادي رم',     dist: 320, priceJod: 15, icon: '⛺', color: '#F59E0B' },
-  { from: 'Amman', fromAr: 'عمّان', to: 'Zarqa',    toAr: 'الزرقاء',     dist: 30,  priceJod: 2,  icon: '🏙️', color: C.purple },
+  { from: 'Amman', fromAr: '?????', to: 'Aqaba',    toAr: '??????',      dist: 330, priceJod: 8,  icon: '???', color: C.cyan   },
+  { from: 'Amman', fromAr: '?????', to: 'Irbid',    toAr: '????',        dist: 85,  priceJod: 3,  icon: '??', color: C.green  },
+  { from: 'Amman', fromAr: '?????', to: 'Dead Sea', toAr: '????? ?????', dist: 60,  priceJod: 5,  icon: '??', color: '#0EA5E9' },
+  { from: 'Amman', fromAr: '?????', to: 'Petra',    toAr: '???????',     dist: 250, priceJod: 12, icon: '???', color: C.gold   },
+  { from: 'Amman', fromAr: '?????', to: 'Wadi Rum', toAr: '???? ??',     dist: 320, priceJod: 15, icon: '?', color: '#F59E0B' },
+  { from: 'Amman', fromAr: '?????', to: 'Zarqa',    toAr: '???????',     dist: 30,  priceJod: 2,  icon: '???', color: C.purple },
 ];
 
-/* ── Skeleton loader ─────────────────────────────────────────────────────── */
+/* -- Skeleton loader ------------------------------------------------------- */
 function Skeleton({ w = '100%', h = 20, radius = 8 }: { w?: string | number; h?: number; radius?: number }) {
   return (
     <div style={{
@@ -82,7 +82,7 @@ function Skeleton({ w = '100%', h = 20, radius = 8 }: { w?: string | number; h?:
   );
 }
 
-/* ── Section header ──────────────────────────────────────────────────────── */
+/* -- Section header -------------------------------------------------------- */
 function SectionHeader({ title, icon, action, onAction }: {
   title: string; icon: string; action?: string; onAction?: () => void;
 }) {
@@ -101,7 +101,7 @@ function SectionHeader({ title, icon, action, onAction }: {
   );
 }
 
-/* ── Currency mini-switcher ──────────────────────────────────────────────── */
+/* -- Currency mini-switcher ------------------------------------------------ */
 function InlineCurrencySwitcher({ ar }: { ar: boolean }) {
   const svc = CurrencyService.getInstance();
   const [cur, setCur] = useState<SupportedCurrency>(svc.current);
@@ -131,7 +131,7 @@ function InlineCurrencySwitcher({ ar }: { ar: boolean }) {
         border: '1px solid rgba(0,200,232,0.25)', cursor: 'pointer',
         fontSize: '0.72rem', fontWeight: 700, color: C.cyan, fontFamily: F,
       }}>
-        💱 {cur}
+        ?? {cur}
         <ChevronDown size={10} />
       </button>
       {open && (
@@ -159,7 +159,7 @@ function InlineCurrencySwitcher({ ar }: { ar: boolean }) {
   );
 }
 
-/* ── SOS Emergency button ────────────────────────────────────────────────── */
+/* -- SOS Emergency button -------------------------------------------------- */
 function SOSButton({ ar }: { ar: boolean }) {
   const [pressed, setPressed] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -189,32 +189,32 @@ function SOSButton({ ar }: { ar: boolean }) {
       >
         <Phone size={14} />
         {pressed
-          ? (ar ? 'جارٍ الاتصال...' : 'Calling…')
+          ? (ar ? '???? ???????...' : 'Calling�')
           : confirm
-          ? (ar ? 'اضغط مجدداً للتأكيد' : 'Tap again to confirm')
+          ? (ar ? '???? ?????? ???????' : 'Tap again to confirm')
           : 'SOS'
         }
       </motion.button>
       {confirm && !pressed && (
         <button onClick={() => setConfirm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textDim, fontSize: '0.72rem', fontFamily: F }}>
-          {ar ? 'إلغاء' : 'Cancel'}
+          {ar ? '?????' : 'Cancel'}
         </button>
       )}
     </div>
   );
 }
 
-/* ── Trust Score panel ──────────────────────────────────────────────────── */
+/* -- Trust Score panel ---------------------------------------------------- */
 function TrustScoreCard({ score, ar }: { score: number; ar: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const pct = score;
 
   const factors = [
-    { label: ar ? 'التحقق من الهوية (سند)' : 'ID Verification (Sanad)',   weight: 35, yours: 35, color: C.cyan  },
-    { label: ar ? 'التقييمات من المستخدمين' : 'User Ratings',              weight: 25, yours: 22, color: C.green },
-    { label: ar ? 'عدد الرحلات المكتملة'   : 'Completed Trips',            weight: 20, yours: 14, color: C.gold  },
-    { label: ar ? 'النشاط الأخير'          : 'Recent Activity',            weight: 10, yours: 8,  color: C.purple},
-    { label: ar ? 'تفضيلات ثقافية محددة'   : 'Cultural Preferences Set',   weight: 10, yours: 8,  color: '#0EA5E9'},
+    { label: ar ? '?????? ?? ?????? (???)' : 'ID Verification (Sanad)',   weight: 35, yours: 35, color: C.cyan  },
+    { label: ar ? '????????? ?? ??????????' : 'User Ratings',              weight: 25, yours: 22, color: C.green },
+    { label: ar ? '??? ??????? ????????'   : 'Completed Trips',            weight: 20, yours: 14, color: C.gold  },
+    { label: ar ? '?????? ??????'          : 'Recent Activity',            weight: 10, yours: 8,  color: C.purple},
+    { label: ar ? '??????? ?????? ?????'   : 'Cultural Preferences Set',   weight: 10, yours: 8,  color: '#0EA5E9'},
   ];
 
   const color = pct >= 80 ? C.green : pct >= 60 ? C.gold : C.red;
@@ -228,21 +228,21 @@ function TrustScoreCard({ score, ar }: { score: number; ar: boolean }) {
           </div>
           <div>
             <div style={{ fontWeight: 700, color: C.text, fontSize: '0.9rem', fontFamily: F }}>
-              {ar ? 'درجة الثقة' : 'Trust Score'}
+              {ar ? '???? ?????' : 'Trust Score'}
             </div>
             <div style={{ fontSize: '0.72rem', color, fontFamily: F }}>
-              {pct >= 80 ? (ar ? 'ممتاز 🏆' : 'Excellent 🏆') : pct >= 60 ? (ar ? 'جيد' : 'Good') : (ar ? 'يحتاج تحسين' : 'Needs Improvement')}
+              {pct >= 80 ? (ar ? '????? ??' : 'Excellent ??') : pct >= 60 ? (ar ? '???' : 'Good') : (ar ? '????? ?????' : 'Needs Improvement')}
             </div>
           </div>
         </div>
         <button onClick={() => setExpanded(e => !e)} style={{ background: 'rgba(0,200,232,0.08)', border: '1px solid rgba(0,200,232,0.18)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.72rem', color: C.cyan, fontFamily: F, fontWeight: 600 }}>
           <Info size={12} />
-          {ar ? 'لماذا؟' : 'Why?'}
+          {ar ? '??????' : 'Why?'}
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </button>
       </div>
 
-      {/* Progress bar — R.full = border-radius: 9999px */}
+      {/* Progress bar � R.full = border-radius: 9999px */}
       <div style={{ marginTop: 12, height: 6, borderRadius: 9999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, borderRadius: 9999, background: `linear-gradient(90deg, ${color}, ${color}99)`, transition: 'width 0.8s ease' }} />
       </div>
@@ -259,7 +259,7 @@ function TrustScoreCard({ score, ar }: { score: number; ar: boolean }) {
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(0,200,232,0.10)' }}>
               <p style={{ fontSize: '0.75rem', color: C.textMuted, fontFamily: F, marginBottom: 12 }}>
                 {ar
-                  ? 'درجتك محسوبة من 5 عوامل. كل عامل له وزن محدد من 100 نقطة:'
+                  ? '????? ?????? ?? 5 ?????. ?? ???? ?? ??? ???? ?? 100 ????:'
                   : 'Your score is calculated from 5 factors. Each has a weight out of 100 points:'
                 }
               </p>
@@ -276,8 +276,8 @@ function TrustScoreCard({ score, ar }: { score: number; ar: boolean }) {
               ))}
               <p style={{ marginTop: 10, fontSize: '0.7rem', color: C.textDim, fontFamily: F }}>
                 {ar
-                  ? '💡 لترفع درجتك: أكمل التحقق من هويتك، أضف صورة شخصية، وأكمل المزيد من الرحلات.'
-                  : '💡 To improve: complete ID verification, add a profile photo, and complete more trips.'
+                  ? '?? ????? ?????: ???? ?????? ?? ?????? ??? ???? ?????? ????? ?????? ?? ???????.'
+                  : '?? To improve: complete ID verification, add a profile photo, and complete more trips.'
                 }
               </p>
             </div>
@@ -288,7 +288,7 @@ function TrustScoreCard({ score, ar }: { score: number; ar: boolean }) {
   );
 }
 
-/* ── Main Component ──────────────────────────────────────────────────────── */
+/* -- Main Component -------------------------------------------------------- */
 export function HomePage() {
   const { language, dir } = useLanguage();
   const { user } = useAuth();
@@ -298,7 +298,7 @@ export function HomePage() {
   const [tripMode, setTripMode] = useState<'one-way' | 'round'>('one-way');
   const [currency, setCurrencyDisplay] = useState(CurrencyService.getInstance().current);
 
-  // ── Live data hooks ───────────────────────────────────────────────────────
+  // -- Live data hooks -------------------------------------------------------
   const { stats: liveStats, loading } = useLiveUserStats();
   const platformStats = useLivePlatformStats();
 
@@ -329,48 +329,48 @@ export function HomePage() {
 
   const firstName = user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || '';
 
-  /* ── Quick Actions ── */
+  /* -- Quick Actions -- */
   const quickActions = [
     {
-      icon: Search, emoji: '🚗',
-      title: ar ? 'ابحث عن رحلة' : 'Find a Ride',
-      desc:  ar ? 'أكثر من 100 رحلة يومية' : '100+ routes daily',
+      icon: Search, emoji: '??',
+      title: ar ? '???? ?? ????' : 'Find a Ride',
+      desc:  ar ? '???? ?? 100 ???? ?????' : '100+ routes daily',
       color: C.cyan, dim: C.cyanDim, border: 'rgba(0,200,232,0.25)', path: '/find-ride',
     },
     {
-      icon: Car, emoji: '➕',
-      title: ar ? 'أضف رحلتك' : 'Offer a Ride',
-      desc:  ar ? 'شارك وكسب المال' : 'Share & earn fuel money',
+      icon: Car, emoji: '?',
+      title: ar ? '??? ?????' : 'Offer a Ride',
+      desc:  ar ? '???? ???? ?????' : 'Share & earn fuel money',
       color: C.gold, dim: C.goldDim, border: 'rgba(240,168,48,0.25)', path: '/offer-ride',
     },
     {
-      icon: Package, emoji: '📦',
-      title: ar ? 'أرسل طرداً' : 'Send Package',
-      desc:  ar ? 'أرسل بأمان عبر مسافر' : 'Via trusted traveler',
+      icon: Package, emoji: '??',
+      title: ar ? '???? ?????' : 'Send Package',
+      desc:  ar ? '???? ????? ??? ?????' : 'Via trusted traveler',
       color: '#D9965B', dim: 'rgba(217,149,91,0.12)', border: 'rgba(217,149,91,0.25)', path: '/find-ride',
     },
     {
-      icon: Repeat, emoji: '🔄',
-      title: ar ? 'رجع — إرجاع' : 'Raje3 Return',
-      desc:  ar ? 'إرجاع طرود التجارة الإلكترونية' : 'E-commerce return matching',
+      icon: Repeat, emoji: '??',
+      title: ar ? '??? � ?????' : 'Raje3 Return',
+      desc:  ar ? '????? ???? ??????? ???????????' : 'E-commerce return matching',
       color: C.purple, dim: C.purpleDim, border: 'rgba(139,92,246,0.25)', path: '/raje3',
     },
   ];
 
-  /* ── Stats (mock — would come from API in production) ── */
+  /* -- Stats (mock � would come from API in production) -- */
   const statsData = [
-    { icon: Car,        label: ar ? 'إجمالي الرحلات'  : 'Total Trips',    value: liveStats?.totalTrips?.toString() ?? '…',                color: C.cyan   },
-    { icon: TrendingUp, label: ar ? 'إجمالي التوفير'  : 'Total Savings',  value: liveStats ? svc.formatFromJOD(liveStats.totalSaved) : '…', color: C.green  },
-    { icon: Star,       label: ar ? 'التقييم'         : 'Rating',         value: liveStats ? `${liveStats.rating}⭐`                  : '…', color: C.gold   },
-    { icon: Package,    label: ar ? 'الطرود المُوصلة' : 'Pkgs Delivered', value: liveStats?.pkgsDelivered?.toString()                 ?? '…', color: C.purple },
+    { icon: Car,        label: ar ? '?????? ???????'  : 'Total Trips',    value: liveStats?.totalTrips?.toString() ?? '�',                color: C.cyan   },
+    { icon: TrendingUp, label: ar ? '?????? ???????'  : 'Total Savings',  value: liveStats ? svc.formatFromJOD(liveStats.totalSaved) : '�', color: C.green  },
+    { icon: Star,       label: ar ? '???????'         : 'Rating',         value: liveStats ? `${liveStats.rating}?`                  : '�', color: C.gold   },
+    { icon: Package,    label: ar ? '?????? ????????' : 'Pkgs Delivered', value: liveStats?.pkgsDelivered?.toString()                 ?? '�', color: C.purple },
   ];
 
-  /* ── Features ── */
+  /* -- Features -- */
   const features = [
-    { icon: CheckCircle, title: ar ? 'مستخدمون موثوقون' : 'Verified Users',   desc: ar ? 'جميع المستخدمين مُتحقق منهم عبر سند'  : 'All users verified via Sanad',         color: C.cyan   },
-    { icon: Moon,        title: ar ? 'توقفات الصلاة'    : 'Prayer Stops',     desc: ar ? 'خطط رحلتك مع أوقات الصلاة'           : 'Plan trips around prayer times',       color: C.gold   },
-    { icon: TrendingUp,  title: ar ? 'وفر 70%'          : 'Save 70%',         desc: ar ? 'مقارنة بسيارات الأجرة التقليدية'      : 'Vs traditional taxis',                 color: C.green  },
-    { icon: Shield,      title: ar ? 'آمن ومضمون'       : 'Safe & Secure',    desc: ar ? 'SOS حقيقي + دعم 24/7 + تأمين رحلات' : 'Real SOS + 24/7 support + insurance',  color: C.purple },
+    { icon: CheckCircle, title: ar ? '???????? ???????' : 'Verified Users',   desc: ar ? '???? ?????????? ?????? ???? ??? ???'  : 'All users verified via Sanad',         color: C.cyan   },
+    { icon: Moon,        title: ar ? '?????? ??????'    : 'Prayer Stops',     desc: ar ? '??? ????? ?? ????? ??????'           : 'Plan trips around prayer times',       color: C.gold   },
+    { icon: TrendingUp,  title: ar ? '??? 70%'          : 'Save 70%',         desc: ar ? '?????? ??????? ?????? ?????????'      : 'Vs traditional taxis',                 color: C.green  },
+    { icon: Shield,      title: ar ? '??? ??????'       : 'Safe & Secure',    desc: ar ? 'SOS ????? + ??? 24/7 + ????? ?????' : 'Real SOS + 24/7 support + insurance',  color: C.purple },
   ];
 
   return (
@@ -410,7 +410,7 @@ export function HomePage() {
 
       <div className="relative z-10 mx-auto px-4 py-8" style={{ maxWidth: 1120 }}>
 
-        {/* ── Refresh control ── */}
+        {/* -- Refresh control -- */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
           <button
             onClick={handleRefresh}
@@ -424,11 +424,11 @@ export function HomePage() {
             }}
           >
             <RefreshCw size={12} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
-            {ar ? (refreshing ? 'جارٍ التحديث...' : 'تحديث') : (refreshing ? 'Refreshing…' : 'Refresh')}
+            {ar ? (refreshing ? '???? ???????...' : '?????') : (refreshing ? 'Refreshing�' : 'Refresh')}
           </button>
         </div>
 
-        {/* ── Hero greeting + Brand story ── */}
+        {/* -- Hero greeting + Brand story -- */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -449,7 +449,7 @@ export function HomePage() {
             </motion.div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: C.cyan, marginBottom: 4, fontFamily: F }}>
-                {ar ? 'واصل | شريكك الذكي بالتنقل' : 'WASEL · YOUR MOBILITY COMPANION'}
+                {ar ? '???? | ????? ????? ???????' : 'WASEL � YOUR MOBILITY COMPANION'}
               </p>
               <h1 className="hero-title" style={{
                 fontWeight: 900, margin: 0, lineHeight: 1.2,
@@ -457,10 +457,10 @@ export function HomePage() {
                 background: `linear-gradient(135deg, #fff 0%, ${C.cyan} 55%, ${C.green} 100%)`,
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>
-                {ar ? `مرحباً${firstName ? `، ${firstName}` : ''}! 👋` : `Welcome back${firstName ? `, ${firstName}` : ''}! 👋`}
+                {ar ? `??????${firstName ? `? ${firstName}` : ''}! ??` : `Welcome back${firstName ? `, ${firstName}` : ''}! ??`}
               </h1>
               <p style={{ color: C.textMuted, fontSize: '0.95rem', marginTop: 4, fontFamily: F }}>
-                {ar ? 'ماذا تريد أن تفعل اليوم؟' : 'What would you like to do today?'}
+                {ar ? '???? ???? ?? ???? ??????' : 'What would you like to do today?'}
               </p>
             </div>
           </div>
@@ -472,7 +472,7 @@ export function HomePage() {
             border: '1px solid rgba(0,200,232,0.14)',
           }}>
             <p style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.textDim, fontFamily: F, marginBottom: 10 }}>
-              {ar ? 'نوع الرحلة' : 'TRIP TYPE'}
+              {ar ? '??? ??????' : 'TRIP TYPE'}
             </p>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               {/* One-way */}
@@ -490,10 +490,10 @@ export function HomePage() {
                 <div style={{ fontSize: '1.4rem' }}>W</div>
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: tripMode === 'one-way' ? C.cyan : C.text, fontFamily: F }}>
-                    {ar ? 'ذهاب فقط' : 'One Way'}
+                    {ar ? '???? ???' : 'One Way'}
                   </div>
                   <div style={{ fontSize: '0.62rem', color: C.textDim, fontFamily: F }}>
-                    {ar ? 'مسار ذهاب فقط' : 'One-way trip'}
+                    {ar ? '???? ???? ???' : 'One-way trip'}
                   </div>
                 </div>
                 {tripMode === 'one-way' && <CheckCircle size={14} color={C.cyan} style={{ marginLeft: 'auto' }} />}
@@ -511,13 +511,13 @@ export function HomePage() {
                   display: 'flex', alignItems: 'center', gap: 10,
                 }}
               >
-                <div style={{ fontSize: '1.4rem' }}>W²</div>
+                <div style={{ fontSize: '1.4rem' }}>W�</div>
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: tripMode === 'round' ? C.green : C.text, fontFamily: F }}>
-                    {ar ? 'ذهاب وعودة' : 'Round Trip'}
+                    {ar ? '???? ?????' : 'Round Trip'}
                   </div>
                   <div style={{ fontSize: '0.62rem', color: C.textDim, fontFamily: F }}>
-                    {ar ? 'رحلة ذهاب وعودة' : 'Round trip'}
+                    {ar ? '???? ???? ?????' : 'Round trip'}
                   </div>
                 </div>
                 {tripMode === 'round' && <CheckCircle size={14} color={C.green} style={{ marginLeft: 'auto' }} />}
@@ -526,14 +526,14 @@ export function HomePage() {
           </div>
         </motion.div>
 
-        {/* ── Quick Actions ── */}
+        {/* -- Quick Actions -- */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           style={{ marginTop: 32 }}
         >
-          <SectionHeader title={ar ? 'إجراءات سريعة' : 'Quick Actions'} icon="⚡" />
+          <SectionHeader title={ar ? '??????? ?????' : 'Quick Actions'} icon="?" />
           <div
             className="quick-grid"
             style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}
@@ -565,7 +565,7 @@ export function HomePage() {
                 <span style={{ fontWeight: 800, fontSize: '0.82rem', color: C.text, fontFamily: F, marginBottom: 3 }}>{a.title}</span>
                 <span style={{ fontSize: '0.68rem', color: C.textDim, fontFamily: F, lineHeight: 1.4 }}>{a.desc}</span>
                 <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 3, color: a.color }}>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 700, fontFamily: F }}>{ar ? 'ابدأ' : 'Start'}</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, fontFamily: F }}>{ar ? '????' : 'Start'}</span>
                   <ChevronRight size={10} />
                 </div>
               </motion.button>
@@ -573,7 +573,7 @@ export function HomePage() {
           </div>
         </motion.section>
 
-        {/* ── Stats + Currency switcher ── */}
+        {/* -- Stats + Currency switcher -- */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -582,9 +582,9 @@ export function HomePage() {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: '1.1rem' }}>📊</span>
+              <span style={{ fontSize: '1.1rem' }}>??</span>
               <h2 style={{ fontWeight: 800, color: C.text, fontSize: '1rem', margin: 0 }}>
-                {ar ? 'إحصائياتك' : 'Your Stats'}
+                {ar ? '?????????' : 'Your Stats'}
               </h2>
             </div>
             <InlineCurrencySwitcher ar={ar} />
@@ -616,7 +616,7 @@ export function HomePage() {
                     <span style={{ fontSize: '0.65rem', color: C.textDim, fontFamily: F }}>{s.label}</span>
                   </div>
                   <p className="stat-value" style={{ fontSize: '1.25rem', fontWeight: 900, color: C.text, fontFamily: F, margin: 0, wordBreak: 'break-word' }}>
-                    {user ? s.value : '—'}
+                    {user ? s.value : '�'}
                   </p>
                 </motion.div>
               ))
@@ -624,7 +624,7 @@ export function HomePage() {
           </div>
         </motion.section>
 
-        {/* ── Wallet balance + SOS row ── */}
+        {/* -- Wallet balance + SOS row -- */}
         {user && (
           <motion.section
             initial={{ opacity: 0, y: 16 }}
@@ -639,7 +639,7 @@ export function HomePage() {
               border: '1px solid rgba(0,200,232,0.18)',
             }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: F }}>
-                {ar ? 'رصيد المحفظة' : 'Wallet Balance'}
+                {ar ? '???? ???????' : 'Wallet Balance'}
               </div>
               <div style={{ marginTop: 6, fontSize: '1.5rem', fontWeight: 900, color: C.cyan, fontFamily: F }}>
                 {loading ? <Skeleton w={100} h={28} radius={6} /> : svc.formatFromJOD(liveStats?.walletBalance ?? 47.5)}
@@ -657,13 +657,13 @@ export function HomePage() {
                 display: 'flex', flexDirection: 'column', gap: 8,
               }}>
                 <div style={{ fontSize: '0.68rem', fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: F }}>
-                  {ar ? 'إحصائيات المنصة المباشرة' : 'Live Platform'}
+                  {ar ? '???????? ?????? ????????' : 'Live Platform'}
                 </div>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   {[
-                    { val: platformStats.activeDrivers,             label: ar ? 'سائق نشط' : 'Drivers',   color: C.cyan  },
-                    { val: platformStats.avgWaitMinutes + ' min',    label: ar ? 'متوسط الانتظار' : 'Avg Wait', color: C.gold  },
-                    { val: platformStats.passengersMatchedToday.toLocaleString(), label: ar ? 'راكب اليوم' : 'Matched', color: C.green },
+                    { val: platformStats.activeDrivers,             label: ar ? '???? ???' : 'Drivers',   color: C.cyan  },
+                    { val: platformStats.avgWaitMinutes + ' min',    label: ar ? '????? ????????' : 'Avg Wait', color: C.gold  },
+                    { val: platformStats.passengersMatchedToday.toLocaleString(), label: ar ? '???? ?????' : 'Matched', color: C.green },
                   ].map(s => (
                     <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, boxShadow: `0 0 6px ${s.color}`, display: 'inline-block' }} />
@@ -682,14 +682,14 @@ export function HomePage() {
               display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'center',
             }}>
               <div style={{ fontSize: '0.68rem', fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: F }}>
-                {ar ? 'الطوارئ' : 'Emergency SOS'}
+                {ar ? '???????' : 'Emergency SOS'}
               </div>
               <SOSButton ar={ar} />
             </div>
           </motion.section>
         )}
 
-        {/* ── Trust Score ── */}
+        {/* -- Trust Score -- */}
         {user && (
           <motion.section
             initial={{ opacity: 0, y: 16 }}
@@ -697,7 +697,7 @@ export function HomePage() {
             transition={{ duration: 0.5, delay: 0.28 }}
             style={{ marginTop: 24 }}
           >
-            <SectionHeader title={ar ? 'درجة الثقة' : 'Trust Score'} icon="🛡️" />
+            <SectionHeader title={ar ? '???? ?????' : 'Trust Score'} icon="???" />
             {loading ? (
               <Skeleton h={80} radius={16} />
             ) : (
@@ -706,7 +706,7 @@ export function HomePage() {
           </motion.section>
         )}
 
-        {/* ── Mobility OS banner ── */}
+        {/* -- Mobility OS banner -- */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -735,28 +735,28 @@ export function HomePage() {
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontSize: '1.2rem' }}>⚡</span>
+                  <span style={{ fontSize: '1.2rem' }}>?</span>
                   <span style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em', color: C.cyan, textTransform: 'uppercase', fontFamily: F }}>
-                    {ar ? 'نظام التنقل الذكي' : 'MOBILITY OS · LAYER 8'}
+                    {ar ? '???? ?????? ?????' : 'MOBILITY OS � LAYER 8'}
                   </span>
                   <span style={{ padding: '2px 8px', borderRadius: 9999, background: 'rgba(0,200,232,0.15)', color: C.cyan, fontSize: '0.6rem', fontWeight: 800, border: '1px solid rgba(0,200,232,0.3)', fontFamily: F }}>LIVE</span>
                 </div>
                 <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.4rem)', fontWeight: 900, color: C.text, fontFamily: F }}>
-                  {ar ? 'التوأم الرقمي للأردن — مباشر 🇯🇴' : 'Jordan Digital Twin — Live 🇯🇴'}
+                  {ar ? '?????? ?????? ?????? � ????? ????' : 'Jordan Digital Twin � Live ????'}
                 </div>
                 <div style={{ marginTop: 4, fontSize: '0.78rem', color: C.textMuted, fontFamily: F }}>
-                  {ar ? 'رؤية الطلب الحي · السائقون · الطرق · الأسعار الديناميكية' : 'Live demand · Drivers · Routes · Dynamic pricing'}
+                  {ar ? '???? ????? ???? � ???????? � ????? � ??????? ???????????' : 'Live demand � Drivers � Routes � Dynamic pricing'}
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: C.cyan }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, fontFamily: F }}>{ar ? 'افتح' : 'Open'}</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, fontFamily: F }}>{ar ? '????' : 'Open'}</span>
                 <ArrowUpRight size={18} />
               </div>
             </div>
           </motion.button>
         </motion.section>
 
-        {/* ── Popular Routes ── */}
+        {/* -- Popular Routes -- */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -764,9 +764,9 @@ export function HomePage() {
           style={{ marginTop: 36 }}
         >
           <SectionHeader
-            title={ar ? 'مسارات شائعة' : 'Popular Routes'}
-            icon="🗺️"
-            action={ar ? 'عرض الكل' : 'View all'}
+            title={ar ? '?????? ?????' : 'Popular Routes'}
+            icon="???"
+            action={ar ? '??? ????' : 'View all'}
             onAction={() => navigate('/find-ride')}
           />
           <div
@@ -799,14 +799,14 @@ export function HomePage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: '1.1rem' }}>{r.icon}</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: C.text, fontFamily: F }}>
-                        {ar ? `${r.fromAr} → ${r.toAr}` : `${r.from} → ${r.to}`}
+                        {ar ? `${r.fromAr} ? ${r.toAr}` : `${r.from} ? ${r.to}`}
                       </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.65rem', color: C.textDim, fontFamily: F }}>{r.dist} {ar ? 'كم' : 'km'}</span>
+                      <span style={{ fontSize: '0.65rem', color: C.textDim, fontFamily: F }}>{r.dist} {ar ? '??' : 'km'}</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 800, color: r.color, fontFamily: F }}>
                         {svc.formatFromJOD(r.priceJod)}
-                        <span style={{ fontSize: '0.6rem', fontWeight: 400, color: C.textDim }}>{ar ? '/مقعد' : '/seat'}</span>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 400, color: C.textDim }}>{ar ? '/????' : '/seat'}</span>
                       </span>
                     </div>
                   </motion.button>
@@ -815,14 +815,14 @@ export function HomePage() {
           </div>
         </motion.section>
 
-        {/* ── Why Wasel? ── */}
+        {/* -- Why Wasel? -- */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.42 }}
           style={{ marginTop: 36 }}
         >
-          <SectionHeader title={ar ? 'لماذا واصل؟' : 'Why Wasel?'} icon="🚀" />
+          <SectionHeader title={ar ? '????? ?????' : 'Why Wasel?'} icon="??" />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {features.map((f, i) => (
               <motion.div
@@ -844,7 +844,7 @@ export function HomePage() {
           </div>
         </motion.section>
 
-        {/* ── CTA ── */}
+        {/* -- CTA -- */}
         {!user && (
           <motion.section
             initial={{ opacity: 0, y: 16 }}
@@ -857,14 +857,14 @@ export function HomePage() {
               background: `linear-gradient(135deg, rgba(0,200,232,0.08), rgba(0,200,117,0.05))`,
               border: '1px solid rgba(0,200,232,0.18)',
             }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🚗💫</div>
+              <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>????</div>
               <h2 style={{ fontWeight: 900, color: C.text, fontSize: '1.3rem', marginBottom: 8, fontFamily: F }}>
-                {ar ? 'انضم إلى واصل!' : 'Join Wasel!'}
+                {ar ? '???? ??? ????!' : 'Join Wasel!'}
               </h2>
               <p style={{ color: C.textMuted, fontSize: '0.875rem', marginBottom: 24, maxWidth: 400, margin: '0 auto 24px', fontFamily: F }}>
                 {ar
-                  ? 'ابدأ رحلتك الذكية — وفّر 70% مقارنة بسيارات الأجرة'
-                  : 'Start your smart journey — save up to 70% vs. taxis'
+                  ? '???? ????? ?????? � ???? 70% ?????? ??????? ??????'
+                  : 'Start your smart journey � save up to 70% vs. taxis'
                 }
               </p>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -879,7 +879,7 @@ export function HomePage() {
                     cursor: 'pointer', fontFamily: F, boxShadow: '0 4px 20px rgba(0,200,232,0.3)',
                   }}
                 >
-                  {ar ? 'ابدأ مجاناً ←' : 'Get started free →'}
+                  {ar ? '???? ?????? ?' : 'Get started free ?'}
                 </motion.button>
                 <motion.button
                   onClick={() => navigate('/find-ride')}
@@ -892,7 +892,7 @@ export function HomePage() {
                     cursor: 'pointer', fontFamily: F,
                   }}
                 >
-                  {ar ? 'ابحث عن رحلة' : 'Browse rides'}
+                  {ar ? '???? ?? ????' : 'Browse rides'}
                 </motion.button>
               </div>
             </div>

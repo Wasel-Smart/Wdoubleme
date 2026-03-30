@@ -1,6 +1,6 @@
 /**
  * Jordan Mobility Network - 12 Core Routes
- * Pre-configured routes with coordinates, distances, and pricing
+ * Pre-configured routes with coordinates, distances, and pricing.
  */
 
 export interface JordanRoute {
@@ -9,9 +9,9 @@ export interface JordanRoute {
   destination: string;
   originAr: string;
   destinationAr: string;
-  distance: number; // km
-  duration: number; // minutes
-  baseFare: number; // JOD
+  distance: number;
+  duration: number;
+  baseFare: number;
   coordinates: {
     origin: { lat: number; lng: number };
     destination: { lat: number; lng: number };
@@ -21,9 +21,6 @@ export interface JordanRoute {
 }
 
 export const JORDAN_MOBILITY_NETWORK: JordanRoute[] = [
-  // ═══════════════════════════════════════════════════════════════
-  // AMMAN HUB (Capital - Main Hub)
-  // ═══════════════════════════════════════════════════════════════
   {
     id: 'amman-irbid',
     origin: 'Amman',
@@ -35,7 +32,7 @@ export const JORDAN_MOBILITY_NETWORK: JordanRoute[] = [
     baseFare: 6.0,
     coordinates: {
       origin: { lat: 31.9454, lng: 35.9284 },
-      destination: { lat: 32.5556, lng: 35.8500 },
+      destination: { lat: 32.5556, lng: 35.85 },
     },
     popularity: 'high',
     category: 'intercity',
@@ -163,15 +160,11 @@ export const JORDAN_MOBILITY_NETWORK: JordanRoute[] = [
     baseFare: 16.0,
     coordinates: {
       origin: { lat: 31.9454, lng: 35.9284 },
-      destination: { lat: 30.1962, lng: 35.7360 },
+      destination: { lat: 30.1962, lng: 35.736 },
     },
     popularity: 'medium',
     category: 'intercity',
   },
-
-  // ═══════════════════════════════════════════════════════════════
-  // NORTHERN ROUTES (Irbid Hub)
-  // ═══════════════════════════════════════════════════════════════
   {
     id: 'irbid-zarqa',
     origin: 'Irbid',
@@ -182,7 +175,7 @@ export const JORDAN_MOBILITY_NETWORK: JordanRoute[] = [
     duration: 60,
     baseFare: 6.0,
     coordinates: {
-      origin: { lat: 32.5556, lng: 35.8500 },
+      origin: { lat: 32.5556, lng: 35.85 },
       destination: { lat: 32.0728, lng: 36.0882 },
     },
     popularity: 'medium',
@@ -198,16 +191,12 @@ export const JORDAN_MOBILITY_NETWORK: JordanRoute[] = [
     duration: 30,
     baseFare: 3.0,
     coordinates: {
-      origin: { lat: 32.5556, lng: 35.8500 },
+      origin: { lat: 32.5556, lng: 35.85 },
       destination: { lat: 32.3326, lng: 35.7519 },
     },
     popularity: 'high',
     category: 'local',
   },
-
-  // ═══════════════════════════════════════════════════════════════
-  // EASTERN ROUTES (Zarqa Hub)
-  // ═══════════════════════════════════════════════════════════════
   {
     id: 'zarqa-mafraq',
     origin: 'Zarqa',
@@ -226,83 +215,57 @@ export const JORDAN_MOBILITY_NETWORK: JordanRoute[] = [
   },
 ];
 
-/**
- * Get route by ID
- */
 export function getRoute(routeId: string): JordanRoute | undefined {
-  return JORDAN_MOBILITY_NETWORK.find((r) => r.id === routeId);
+  return JORDAN_MOBILITY_NETWORK.find((route) => route.id === routeId);
 }
 
-/**
- * Get all routes from a city
- */
 export function getRoutesFrom(city: string): JordanRoute[] {
   return JORDAN_MOBILITY_NETWORK.filter(
-    (r) => r.origin.toLowerCase() === city.toLowerCase()
+    (route) => route.origin.toLowerCase() === city.toLowerCase(),
   );
 }
 
-/**
- * Get all routes to a city
- */
 export function getRoutesTo(city: string): JordanRoute[] {
   return JORDAN_MOBILITY_NETWORK.filter(
-    (r) => r.destination.toLowerCase() === city.toLowerCase()
+    (route) => route.destination.toLowerCase() === city.toLowerCase(),
   );
 }
 
-/**
- * Get route between two cities (bidirectional)
- */
-export function getRouteBetween(
-  city1: string,
-  city2: string
-): JordanRoute | undefined {
+export function getRouteBetween(city1: string, city2: string): JordanRoute | undefined {
   const c1 = city1.toLowerCase();
   const c2 = city2.toLowerCase();
-  
+
   return JORDAN_MOBILITY_NETWORK.find(
-    (r) =>
-      (r.origin.toLowerCase() === c1 && r.destination.toLowerCase() === c2) ||
-      (r.origin.toLowerCase() === c2 && r.destination.toLowerCase() === c1)
+    (route) =>
+      (route.origin.toLowerCase() === c1 && route.destination.toLowerCase() === c2) ||
+      (route.origin.toLowerCase() === c2 && route.destination.toLowerCase() === c1),
   );
 }
 
-/**
- * Get all unique cities
- */
 export function getAllCities(): string[] {
   const cities = new Set<string>();
-  JORDAN_MOBILITY_NETWORK.forEach((r) => {
-    cities.add(r.origin);
-    cities.add(r.destination);
+  JORDAN_MOBILITY_NETWORK.forEach((route) => {
+    cities.add(route.origin);
+    cities.add(route.destination);
   });
   return Array.from(cities).sort();
 }
 
-/**
- * Get popular routes
- */
 export function getPopularRoutes(): JordanRoute[] {
-  return JORDAN_MOBILITY_NETWORK.filter((r) => r.popularity === 'high');
+  return JORDAN_MOBILITY_NETWORK.filter((route) => route.popularity === 'high');
 }
 
-/**
- * Calculate fare based on distance and passengers
- */
 export function calculateFare(
   distance: number,
   passengers: number = 1,
-  mode: 'carpooling' | 'on-demand' = 'carpooling'
+  mode: 'carpooling' | 'on-demand' = 'carpooling',
 ): number {
   if (mode === 'carpooling') {
-    // Fuel-based cost sharing
-    const fuelCost = distance * 0.072; // JOD per km
+    const fuelCost = distance * 0.072;
     const buffer = 1.2;
     return Math.ceil((fuelCost * buffer) / passengers);
-  } else {
-    // On-demand dynamic pricing
-    const baseFare = distance * 0.5 + 2.0; // Base + per km
-    return Math.ceil(baseFare);
   }
+
+  const baseFare = distance * 0.5 + 2.0;
+  return Math.ceil(baseFare);
 }

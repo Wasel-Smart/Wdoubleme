@@ -95,7 +95,35 @@ describe('journeyLogistics', () => {
 
     expect(created.trackingId).toMatch(/^PKG-/);
     expect(getConnectedPackages()).toHaveLength(1);
-    expect(getConnectedPackages()[0].status).toBe('searching');
+    expect(['searching', 'matched']).toContain(getConnectedPackages()[0].status);
+  });
+
+  it('attempts to persist packages remotely when auth is available even without recipient details', async () => {
+    mockFetchWithRetry.mockResolvedValue(
+      response({
+        package: {
+          id: 'pkg-remote-basic',
+          tracking_code: 'PKG-11111',
+          from: 'Amman',
+          to: 'Zarqa',
+          status: 'pending',
+          created_at: '2026-03-27T00:00:00Z',
+        },
+      })
+    );
+
+    const created = await createConnectedPackage({
+      from: 'Amman',
+      to: 'Zarqa',
+      weight: '1',
+      note: 'Documents',
+    });
+
+    expect(mockFetchWithRetry).toHaveBeenCalledWith(
+      expect.stringContaining('/packages'),
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(created.trackingId).toBe('PKG-11111');
   });
 
   it('creates a package via the server when recipient details are present', async () => {

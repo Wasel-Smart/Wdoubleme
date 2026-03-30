@@ -203,6 +203,10 @@ export interface TwoFactorSetup {
   backupCodes: string[];
 }
 
+export function isTwoFactorAvailable(): boolean {
+  return typeof window !== 'undefined' && typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function';
+}
+
 export async function enable2FA(userId: string): Promise<TwoFactorSetup> {
   try {
     // Generate TOTP secret
@@ -412,6 +416,7 @@ export const Security = {
   getPasswordStrengthLabel,
   getPasswordStrengthColor,
   enable2FA,
+  isTwoFactorAvailable,
   verify2FACode,
   disable2FA,
   sanitizeInput,

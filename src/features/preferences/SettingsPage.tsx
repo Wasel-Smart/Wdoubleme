@@ -3,9 +3,15 @@
  * App-wide settings: notifications, privacy, language, display, account.
  */
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useLocalAuth } from '../../contexts/LocalAuth';
 import { useIframeSafeNavigate } from '../../hooks/useIframeSafeNavigate';
 import { Bell, Globe, Shield, Eye, Palette, ChevronRight } from 'lucide-react';
+import type { Language } from '../../locales/translations';
+import { getConfig } from '../../utils/env';
+import { isTwoFactorAvailable } from '../../utils/security';
 
 const BG   = '#040C18';
 const CARD = 'rgba(255,255,255,0.04)';
@@ -97,11 +103,25 @@ function LinkRow({ label, sub, onClick }: { label: string; sub?: string; onClick
   );
 }
 
+function InfoRow({ label, sub }: { label: string; sub?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '14px 18px', borderBottom: `1px solid ${BORD}`, gap: 12 }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#EFF6FF', fontFamily: FONT }}>{label}</div>
+        {sub && <div style={{ fontSize: '0.72rem', color: 'rgba(148,163,184,0.55)', fontFamily: FONT, marginTop: 2 }}>{sub}</div>}
+      </div>
+    </div>
+  );
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const { language, setLanguage } = useLanguage();
+  const { resetPassword } = useAuth();
+  const { user } = useLocalAuth();
   const nav = useIframeSafeNavigate();
   const ar = language === 'ar';
+  const { enableDemoAccount } = getConfig();
 
   // Notification prefs
   const [notifs, setNotifs] = useState({
@@ -124,8 +144,13 @@ export default function SettingsPage() {
   });
 
   // Display
-  const [display, setDisplay] = useState({
-    language:  language,
+  const [display, setDisplay] = useState<{
+    language: Language;
+    currency: string;
+    theme: string;
+    direction: string;
+  }>({
+    language,
     currency:  'JOD',
     theme:     'dark',
     direction: ar ? 'rtl' : 'ltr',
@@ -136,6 +161,25 @@ export default function SettingsPage() {
 
   const togglePrivacy = <K extends keyof typeof privacy>(k: K) =>
     setPrivacy(p => ({ ...p, [k]: !p[k] }));
+
+  const handlePasswordReset = async () => {
+    if (!user?.email) {
+      toast.error(ar ? 'No email is associated with this account.' : 'No email is associated with this account.');
+      return;
+    }
+
+    const { error } = await resetPassword(user.email);
+    if (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+      return;
+    }
+
+    toast.success(ar ? `Reset link sent to ${user.email}` : `Reset link sent to ${user.email}`);
+  };
+
+  const sessionSummary = user
+    ? `One active session on this device · ${user.backendMode === 'supabase' ? 'Supabase' : 'Demo mode'}`
+    : 'Sign in to view active sessions';
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: FONT, direction: ar ? 'rtl' : 'ltr', paddingBottom: 80 }}>
@@ -163,7 +207,11 @@ export default function SettingsPage() {
             label={ar ? 'اللغة' : 'Language'}
             options={[{ value: 'en', label: 'English' }, { value: 'ar', label: 'العربية' }]}
             value={display.language}
-            onChange={v => { setDisplay(p => ({ ...p, language: v })); setLanguage(v as 'en' | 'ar'); }}
+            onChange={v => {
+              const nextLanguage = (v === 'ar' ? 'ar' : 'en') as Language;
+              setDisplay(p => ({ ...p, language: nextLanguage }));
+              setLanguage(nextLanguage);
+            }}
           />
           <SelectRow
             label={ar ? 'العملة' : 'Currency'}

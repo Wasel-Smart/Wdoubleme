@@ -106,6 +106,17 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
         >
           {this.state.error || 'An unexpected error occurred.'}
         </p>
+        <p
+          style={{
+            color: '#8A9ABD',
+            fontSize: '0.825rem',
+            marginBottom: 20,
+            maxWidth: 420,
+            lineHeight: 1.6,
+          }}
+        >
+          Refresh the page or try again. If the issue continues, return to the home screen and restart the flow.
+        </p>
         <button
           onClick={() => this.setState({ hasError: false, error: '' })}
           style={{
@@ -119,7 +130,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryS
             fontSize: '0.9rem',
           }}
         >
-          Try Again
+          Reload Screen
         </button>
       </div>
     );

@@ -7,12 +7,14 @@ import { useState, useEffect, useRef } from 'react';
 import type React from 'react';
 import { useSearchParams } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 import { WaselLogo, WaselHeroMark } from '../components/wasel-ds/WaselLogo';
 import { useLocalAuth } from '../contexts/LocalAuth';
 import { useIframeSafeNavigate } from '../hooks/useIframeSafeNavigate';
 import { Eye, EyeOff, CheckCircle2, Loader2, Shield, Zap, Package, Bus } from 'lucide-react';
 import { checkRateLimit, validateEmail } from '../utils/security';
 import { useAuth } from '../contexts/AuthContext';
+import { getConfig, getWhatsAppSupportUrl } from '../utils/env';
 
 // ── Tokens (all dark) ─────────────────────────────────────────────────────────
 const C = {
@@ -107,7 +109,6 @@ type Tab = 'signin' | 'register';
 export default function WaselAuth() {
   const [params] = useSearchParams();
   const initialTab = params.get('tab') === 'register' ? 'register' : 'signin';
-  const returnTo   = params.get('returnTo') || '/app/dashboard';
 
   const [tab,      setTab]      = useState<Tab>(initialTab);
   const [email,    setEmail]    = useState('');
@@ -118,14 +119,15 @@ export default function WaselAuth() {
   const [success,  setSuccess]  = useState(false);
 
   const { signIn, register, loading, user } = useLocalAuth();
-  const { resetPassword } = useAuth();
+  const { resetPassword, signInWithGoogle, signInWithFacebook } = useAuth();
   const nav = useIframeSafeNavigate();
   const mountedRef = useRef(true);
+  const { enableDemoAccount, supportWhatsAppNumber } = getConfig();
 
   // Validate returnTo to prevent open redirect — only allow same-origin paths
   const safeReturnTo = (() => {
-    const raw = params.get('returnTo') || '/app/dashboard';
-    return raw.startsWith('/') && !raw.startsWith('//') ? raw : '/app/dashboard';
+    const raw = params.get('returnTo') || '/app/find-ride';
+    return raw.startsWith('/') && !raw.startsWith('//') ? raw : '/app/find-ride';
   })();
 
   useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
@@ -174,7 +176,41 @@ export default function WaselAuth() {
     if (error) setErr(typeof error === 'string' ? error : (error as Error).message);
     else setErr('');
     // Show success regardless to prevent email enumeration
-    alert(`If ${email} is registered, a reset link has been sent.`);
+    toast.success(`If ${email} is registered, a reset link has been sent.`);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErr('');
+    const { error } = await signInWithGoogle();
+    if (error) {
+      setErr(error instanceof Error ? error.message : 'Google sign-in failed');
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    setErr('');
+    const { error } = await signInWithFacebook();
+    if (error) {
+      setErr(error instanceof Error ? error.message : 'Facebook sign-in failed');
+    }
+  };
+
+  const handleWhatsAppHelp = () => {
+    if (!supportWhatsAppNumber) {
+      setErr('WhatsApp support is not configured yet.');
+      return;
+    }
+
+    window.open(
+      getWhatsAppSupportUrl('Hi Wasel'),
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
+  const socialActions: Record<string, () => void | Promise<void>> = {
+    Google: handleGoogleSignIn,
+    Facebook: handleFacebookSignIn,
+    WhatsApp: handleWhatsAppHelp,
   };
   const pw = pwStrength(password);
 
@@ -364,7 +400,11 @@ export default function WaselAuth() {
 
                 {tab === 'signin' && (
                   <div style={{ textAlign:'right' }}>
-                    <button style={{ background:'none', border:'none', color:C.cyan, fontSize:'0.76rem', cursor:'pointer', fontFamily:C.F }}>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      style={{ background:'none', border:'none', color:C.cyan, fontSize:'0.76rem', cursor:'pointer', fontFamily:C.F }}
+                    >
                       Forgot password? / نسيت كلمة المرور؟
                     </button>
                   </div>
@@ -400,16 +440,24 @@ export default function WaselAuth() {
                     { icon:'🌐', label:'Google',   color:'#4285F4' },
                     { icon:'📱', label:'WhatsApp', color:'#25D366' },
                   ].map(s => (
-                    <motion.button key={s.label} whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }}
+                    <motion.button key={s.label} whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }} type="button" onClick={() => { void socialActions[s.label]?.(); }}
                       style={{ flex:1, height:44, borderRadius:R.md, border:`1px solid ${s.color}30`, background:`${s.color}0A`, color:s.color, fontWeight:700, fontSize:'0.8rem', fontFamily:C.F, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:7 }}>
                       <span>{s.icon}</span> {s.label}
                     </motion.button>
                   ))}
                 </div>
 
+                <button
+                  type="button"
+                  onClick={handleFacebookSignIn}
+                  style={{ height:44, borderRadius:R.md, border:'1px solid rgba(24,119,242,0.28)', background:'rgba(24,119,242,0.08)', color:'#1877F2', fontWeight:600, fontSize:'0.8rem', fontFamily:C.F, cursor:'pointer' }}
+                >
+                  Facebook Sign In
+                </button>
+
                 {/* Demo shortcut */}
-                <button onClick={handleDemo}
-                  style={{ height:44, borderRadius:R.md, border:`1px solid rgba(240,168,48,0.25)`, background:'rgba(240,168,48,0.07)', color:C.gold, fontWeight:600, fontSize:'0.8rem', fontFamily:C.F, cursor:'pointer' }}>
+                <button onClick={handleDemo} type="button" hidden={!enableDemoAccount}
+                  style={{ height:44, borderRadius:R.md, border:`1px solid rgba(240,168,48,0.25)`, background:'rgba(240,168,48,0.07)', color:C.gold, fontWeight:600, fontSize:'0.8rem', fontFamily:C.F, cursor:'pointer', display: enableDemoAccount ? 'block' : 'none' }}>
                   ⚡ Try demo account — جرّب الحساب التجريبي
                 </button>
               </div>
@@ -419,8 +467,8 @@ export default function WaselAuth() {
           {/* Footer note */}
           <p style={{ fontSize:'0.68rem', color:C.muted, textAlign:'center', marginTop:24, lineHeight:1.7 }}>
             By continuing, you agree to our{' '}
-            <span style={{ color:C.cyan, cursor:'pointer' }}>Terms of Service</span>{' '}and{' '}
-            <span style={{ color:C.cyan, cursor:'pointer' }}>Privacy Policy</span>.
+            <button type="button" onClick={() => nav('/terms')} style={{ color:C.cyan, cursor:'pointer', background:'none', border:'none', padding:0, font:'inherit' }}>Terms of Service</button>{' '}and{' '}
+            <button type="button" onClick={() => nav('/privacy')} style={{ color:C.cyan, cursor:'pointer', background:'none', border:'none', padding:0, font:'inherit' }}>Privacy Policy</button>.
             <br />
             <span dir="rtl" style={{ fontFamily:C.FA }}>🇯🇴 مصمّم خصيصاً للأردن والشرق الأوسط</span>
           </p>

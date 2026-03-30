@@ -97,7 +97,10 @@ function normalizeStatus(value: unknown, matchedRideId?: string): PackageStatus 
   const status = String(value ?? '').toLowerCase();
   if (status === 'delivered') return 'delivered';
   if (status === 'in_transit' || status === 'picked_up') return 'in_transit';
-  if (status === 'matched' || (status && status !== 'pending')) return 'matched';
+  if (status === 'searching' || status === 'pending' || status === 'requested' || status === 'queued') {
+    return matchedRideId ? 'matched' : 'searching';
+  }
+  if (status === 'matched' || status === 'assigned' || status === 'accepted') return 'matched';
   return matchedRideId ? 'matched' : 'searching';
 }
 
@@ -274,21 +277,22 @@ export async function createConnectedRide(input: Omit<PostedRide, 'id' | 'create
 
   try {
     const server = await tripsAPI.createTrip({
-      from_location: input.from,
-      to_location: input.to,
-      departure_date: input.date,
-      departure_time: input.time,
-      total_seats: input.seats,
-      available_seats: input.seats,
-      price_per_seat: input.price,
-      status: 'published',
-      vehicle_model: input.carModel,
-      notes: input.note,
-      trip_type: input.acceptsPackages ? 'scheduled' : 'one-time',
-      luggage_space: input.packageCapacity,
+      from: input.from,
+      to: input.to,
+      date: input.date,
+      time: input.time,
+      seats: input.seats,
+      price: input.price,
+      gender: input.gender,
+      prayer: input.prayer,
+      carModel: input.carModel,
+      note: input.note,
+      acceptsPackages: input.acceptsPackages,
+      packageCapacity: input.packageCapacity,
+      packageNote: input.packageNote,
     });
 
-    const created = normalizeServerRide(server as Record<string, unknown>, ride);
+    const created = normalizeServerRide(server as unknown as Record<string, unknown>, ride);
     saveRides([created], getConnectedRides());
     return created;
   } catch {
@@ -301,6 +305,19 @@ export function getConnectedPackages(): PackageRequest[] {
   const packages = mergePackages(readList<PackageRequest>(PACKAGES_KEY));
   writeList(PACKAGES_KEY, packages);
   return packages;
+}
+
+function buildServerPackagePayload(pkg: PackageRequest) {
+  return {
+    from: pkg.from,
+    to: pkg.to,
+    weight: parseWeight(pkg.weight),
+    description: pkg.note,
+    price: 5,
+    ...(pkg.recipientName ? { recipientName: pkg.recipientName } : {}),
+    ...(pkg.recipientPhone ? { recipientPhone: pkg.recipientPhone } : {}),
+    ...(pkg.packageType === 'return' ? { packageType: pkg.packageType } : {}),
+  };
 }
 
 export async function createConnectedPackage(input: {
@@ -346,7 +363,7 @@ export async function createConnectedPackage(input: {
   };
 
   try {
-    if (pkg.recipientName && pkg.recipientPhone) {
+    if (API_URL) {
       const { token } = await getAuthDetails();
       const response = await fetchWithRetry(`${API_URL}/packages`, {
         method: 'POST',
@@ -354,15 +371,7 @@ export async function createConnectedPackage(input: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          from: pkg.from,
-          to: pkg.to,
-          weight: parseWeight(pkg.weight),
-          description: pkg.note,
-          recipientName: pkg.recipientName,
-          recipientPhone: pkg.recipientPhone,
-          price: 5,
-        }),
+        body: JSON.stringify(buildServerPackagePayload(pkg)),
       });
 
       if (response.ok) {

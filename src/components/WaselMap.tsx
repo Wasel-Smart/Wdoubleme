@@ -115,10 +115,8 @@ const TILES = {
   satellite: {
     // Use Google Maps satellite tiles when key is available, else Esri fallback
     url: (() => {
-      try {
-        const key = typeof __GOOGLE_MAPS_API_KEY__ !== 'undefined' ? __GOOGLE_MAPS_API_KEY__ : '';
-        if (key) return `https://maps.googleapis.com/maps/vt?lyrs=s&x={x}&y={y}&z={z}&key=${key}`;
-      } catch {}
+      const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      if (key) return `https://maps.googleapis.com/maps/vt?lyrs=s&x={x}&y={y}&z={z}&key=${key}`;
       return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     })(),
     attribution: '© Google Maps | © Esri, DigitalGlobe',

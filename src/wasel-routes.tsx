@@ -42,6 +42,44 @@ function RedirectTo({ to }: { to: string }) {
   return <Navigate to={to} replace />;
 }
 
+const LEGACY_APP_ALIASES = [
+  '/auth',
+  '/dashboard',
+  '/home',
+  '/find-ride',
+  '/offer-ride',
+  '/post-ride',
+  '/my-trips',
+  '/booking-requests',
+  '/live-trip',
+  '/routes',
+  '/bus',
+  '/packages',
+  '/awasel/send',
+  '/awasel/track',
+  '/raje3',
+  '/services/raje3',
+  '/services/corporate',
+  '/services/school',
+  '/innovation-hub',
+  '/analytics',
+  '/mobility-os',
+  '/ai-intelligence',
+  '/wallet',
+  '/plus',
+  '/payments',
+  '/profile',
+  '/settings',
+  '/notifications',
+  '/trust',
+  '/driver',
+  '/privacy',
+  '/terms',
+  '/legal/privacy',
+  '/legal/terms',
+  '/moderation',
+] as const;
+
 // ── 404 ──────────────────────────────────────────────────────────────────────
 function NotFound() {
   return (
@@ -51,11 +89,11 @@ function NotFound() {
       background: '#040C18', color: '#fff',
       fontFamily: "-apple-system,'Inter',sans-serif", padding: 24,
     }}>
-      <div style={{ fontSize: '4rem', marginBottom: 16 }}>🗺️</div>
+      <div style={{ fontSize: '0.75rem', marginBottom: 16, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#00C8E8', fontWeight: 800 }}>404</div>
       <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: 8 }}>Page not found</h2>
-      <p style={{ color: 'rgba(255,255,255,0.45)', marginBottom: 24 }}>The route you're looking for doesn't exist.</p>
+      <p style={{ color: 'rgba(255,255,255,0.45)', marginBottom: 24, maxWidth: 420, textAlign: 'center' }}>The page you requested is unavailable or the link is outdated.</p>
       <a href="/" style={{ padding: '10px 24px', borderRadius: 12, background: 'linear-gradient(135deg,#00C8E8,#0095B8)', color: '#040C18', fontWeight: 700, textDecoration: 'none' }}>
-        Back to Wasel →
+        Back to Wasel
       </a>
     </div>
   );
@@ -66,7 +104,7 @@ function RouteErrorFallback() {
   const error = useRouteError();
   const message = isRouteErrorResponse(error)
     ? `${error.status} ${error.statusText}`
-    : error instanceof Error ? error.message : 'Something went wrong loading this page.';
+    : error instanceof Error ? error.message : 'This page could not be loaded.';
 
   return (
     <div style={{
@@ -76,7 +114,7 @@ function RouteErrorFallback() {
     }}>
       <div style={{ maxWidth: 560, width: '100%', borderRadius: 20, padding: 28, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,200,232,0.14)' }}>
         <div style={{ fontSize: '0.7rem', color: '#00C8E8', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>App Error</div>
-        <h1 style={{ margin: '0 0 12px', fontSize: '1.5rem', lineHeight: 1.2 }}>This screen hit an error.</h1>
+        <h1 style={{ margin: '0 0 12px', fontSize: '1.5rem', lineHeight: 1.2 }}>This page could not be loaded.</h1>
         <p style={{ color: 'rgba(239,246,255,0.65)', marginBottom: 20 }}>{message}</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <a href="/app/find-ride" style={{ padding: '10px 18px', borderRadius: 12, background: 'linear-gradient(135deg,#00C8E8,#0095B8)', color: '#041018', textDecoration: 'none', fontWeight: 800 }}>Find a Ride</a>
@@ -101,13 +139,17 @@ const buildMainChildren = () => [
     path: 'auth',
     lazy: lazy(() => import('./pages/WaselAuth')),
   },
+  {
+    path: 'auth/callback',
+    lazy: lazy(() => import('./pages/WaselAuthCallback')),
+  },
 
   // ── Dashboard ────────────────────────────────────────────────────────────
   {
     path: 'dashboard',
-    lazy: lazy(() => import('./pages/WaselDashboard')),
+    Component: () => <RedirectTo to="/app/find-ride" />,
   },
-  { path: 'home', Component: () => <RedirectTo to="/app/dashboard" /> },
+  { path: 'home', Component: () => <RedirectTo to="/app/find-ride" /> },
 
   // ── Rides ────────────────────────────────────────────────────────────────
   {
@@ -129,7 +171,7 @@ const buildMainChildren = () => [
   // ── Booking Requests ──────────────────────────────────────────────────────
   {
     path: 'booking-requests',
-    lazy: lazy(() => import('./pages/WaselDashboard')),
+    Component: () => <RedirectTo to="/app/my-trips?tab=rides" />,
   },
 
   // ── Live Trip ─────────────────────────────────────────────────────────────
@@ -166,12 +208,12 @@ const buildMainChildren = () => [
   { path: 'services/raje3', Component: () => <RedirectTo to="/app/raje3" /> },
 
   // ── B2B / B2S ─────────────────────────────────────────────────────────────
-    { path: 'services/corporate', Component: () => <RedirectTo to="/app/dashboard" /> },
-  { path: 'services/school', Component: () => <RedirectTo to="/app/dashboard" /> },
-  { path: 'innovation-hub', Component: () => <RedirectTo to="/app/dashboard" /> },
-  { path: 'analytics', Component: () => <RedirectTo to="/app/dashboard" /> },
-  { path: 'mobility-os', Component: () => <RedirectTo to="/app/dashboard" /> },
-  { path: 'ai-intelligence', Component: () => <RedirectTo to="/app/dashboard" /> },
+    { path: 'services/corporate', Component: () => <RedirectTo to="/app/find-ride" /> },
+  { path: 'services/school', Component: () => <RedirectTo to="/app/find-ride" /> },
+  { path: 'innovation-hub', Component: () => <RedirectTo to="/app/find-ride" /> },
+  { path: 'analytics', Component: () => <RedirectTo to="/app/find-ride" /> },
+  { path: 'mobility-os', Component: () => <RedirectTo to="/app/find-ride" /> },
+  { path: 'ai-intelligence', Component: () => <RedirectTo to="/app/find-ride" /> },
 
   // ── Wallet ────────────────────────────────────────────────────────────────
   {
@@ -200,10 +242,10 @@ const buildMainChildren = () => [
   },
 
   // ── Trust Center ──────────────────────────────────────────────────────────
-  { path: 'trust', Component: () => <RedirectTo to="/app/dashboard" /> },
+  { path: 'trust', Component: () => <RedirectTo to="/app/profile" /> },
 
   // ── Driver ────────────────────────────────────────────────────────────────
-  { path: 'driver', Component: () => <RedirectTo to="/app/dashboard" /> },
+  { path: 'driver', Component: () => <RedirectTo to="/app/offer-ride" /> },
 
   // ── Legal ─────────────────────────────────────────────────────────────────
   {
@@ -218,11 +260,17 @@ const buildMainChildren = () => [
   { path: 'legal/terms',   Component: () => <RedirectTo to="/app/terms" /> },
 
   // ── Moderation ────────────────────────────────────────────────────────────
-  { path: 'moderation', Component: () => <RedirectTo to="/app/dashboard" /> },
+  { path: 'moderation', Component: () => <RedirectTo to="/app/profile" /> },
 
   // ── 404 catch-all ─────────────────────────────────────────────────────────
   { path: '*', Component: NotFound },
 ];
+
+const buildLegacyAliases = () =>
+  LEGACY_APP_ALIASES.map((path) => ({
+    path,
+    Component: () => <RedirectTo to={`/app${path}`} />,
+  }));
 
 // ── Router ────────────────────────────────────────────────────────────────────
 export const waselRouter = createBrowserRouter([
@@ -230,11 +278,17 @@ export const waselRouter = createBrowserRouter([
     path: '/',
     Component: () => <RedirectTo to="/app" />,
   },
+  ...buildLegacyAliases(),
   {
     path: '/app',
     Component: WaselRoot,
     errorElement: <RouteErrorFallback />,
     children: buildMainChildren(),
+  },
+  {
+    path: '*',
+    Component: NotFound,
+    errorElement: <RouteErrorFallback />,
   },
 ]);
 

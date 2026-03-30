@@ -144,6 +144,47 @@ function SectionHead({ emoji, title, titleAr, sub, color = DS.cyan, action }: {
   );
 }
 
+function CoreExperienceBanner({
+  title,
+  detail,
+  tone = DS.cyan,
+}: {
+  title: string;
+  detail: string;
+  tone?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gap: 14,
+        gridTemplateColumns: 'minmax(0, 1.4fr) minmax(260px, 0.8fr)',
+        background: `linear-gradient(135deg, ${tone}10, rgba(255,255,255,0.02))`,
+        border: `1px solid ${tone}28`,
+        borderRadius: r(18),
+        padding: '18px 20px',
+        marginBottom: 18,
+      }}
+    >
+      <div>
+        <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.98rem', marginBottom: 6 }}>{title}</div>
+        <div style={{ color: DS.sub, fontSize: '0.84rem', lineHeight: 1.6 }}>{detail}</div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 8 }}>
+        {[
+          { label: 'Verified identity', color: DS.green },
+          { label: 'Live route network', color: DS.cyan },
+          { label: 'Package-ready corridors', color: DS.gold },
+        ].map((item) => (
+          <span key={item.label} style={pill(item.color)}>
+            {item.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // FIND RIDE PAGE — with working search + trip detail modal
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -764,6 +805,11 @@ export function FindRidePage() {
         <SectionHead emoji="🚗" title="Find a Ride" titleAr="ابحث عن رحلة"
           sub={ar ? 'مسارات يومية بين المدن · احجز مقعدك فورا' : '100+ daily intercity routes · Book a seat instantly'}
           action={{ label: ar ? '➕ أضف رحلة' : '➕ Offer a Ride', onClick:() => nav('/app/offer-ride') }} />
+        <CoreExperienceBanner
+          title="Jordan-first ride sharing built for Middle East standards"
+          detail="Every search is organized around trusted captains, live intercity corridors, and package-compatible routes so the experience feels clear, premium, and region-ready from the first step."
+          tone={DS.cyan}
+        />
 
         {/* Tab toggle */}
         <div style={{ display:'flex', gap:0, background:DS.card, borderRadius:r(14), padding:4, border:`1px solid ${DS.border}`, marginBottom:24 }}>
@@ -1167,6 +1213,11 @@ export function OfferRidePage() {
     <Protected>
       <PageShell>
         <SectionHead emoji="+" title="Offer a Ride" titleAr="Ride Posting" sub="Share your journey - Earn fuel money - Carry passengers and packages together" color={DS.blue} />
+        <CoreExperienceBanner
+          title="Publish one trip for riders and packages together"
+          detail="Offer Ride now acts as a supply tool for the full Wasel network. Drivers can expose seats, parcel space, and corridor availability in one trusted posting flow."
+          tone={DS.blue}
+        />
         <div className="sp-4col" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:18 }}>
           {[
             { label:'Posted rides', value:String(networkStats.ridesPosted), detail:'Connected across the app', color:DS.cyan },
@@ -1498,6 +1549,11 @@ export function PackagesPage() {
     <Protected>
       <PageShell>
         <SectionHead emoji="PKG" title="Wasel Packages" titleAr="Package Logistics" sub="Send - Track - Return - powered by connected rides" color={DS.gold} action={{ label:'Post a package-ready ride', onClick: () => nav('/app/offer-ride') }} />
+        <CoreExperienceBanner
+          title="Package sharing on the same live mobility network"
+          detail="Packages are no longer framed like a separate product. Matching, tracking, and trust now sit on top of the same corridor network used by riders and drivers."
+          tone={DS.gold}
+        />
         <div className="sp-4col" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:18 }}>
           {[
             { label:'Connected rides', value:String(networkStats.ridesPosted), detail:'Posted routes visible to packages', color:DS.cyan },
@@ -1950,6 +2006,11 @@ export function BusPage() {
     <Protected>
       <PageShell>
         <SectionHead emoji="🚌" title="Wasel Bus" titleAr="Bus Service" sub="Fixed-price intercity coaches - Scheduled booking - Live route preview" color={DS.green} />
+        <CoreExperienceBanner
+          title="Scheduled transport with the same premium Wasel system"
+          detail="Bus keeps the same trust language as rides and packages: clear pricing, predictable departures, and route visibility before checkout so users never feel like they entered a different product."
+          tone={DS.green}
+        />
 
         <div className="sp-4col" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:18 }}>
           {[
@@ -2245,6 +2306,11 @@ export function DriverPage() {
     <Protected>
       <PageShell>
         <SectionHead emoji="📊" title="Driver Dashboard" titleAr="لوحة السائق" sub="Earnings · Trips · Demand Heatmap" color={DS.blue} />
+        <CoreExperienceBanner
+          title="Driver operations with the same premium product system"
+          detail="The driver side now aligns with the rest of Wasel: clearer performance signals, live demand visibility, and trust-forward operations instead of a disconnected internal-looking dashboard."
+          tone={DS.blue}
+        />
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
           {[
             { label:"Today's Earnings", val:'JOD 42', icon:'💰', color:DS.green },
@@ -2301,6 +2367,11 @@ export function SafetyPage() {
     <Protected>
       <PageShell>
         <SectionHead emoji="🛡️" title="Safety Center" titleAr="مركز الأمان" sub="ID-verified drivers · SOS · Trip insurance" color={DS.green} />
+        <CoreExperienceBanner
+          title="Trust should feel built in, not added later"
+          detail="Safety is presented here as a system-wide product layer: verified identity, emergency support, insurance, and cultural comfort cues that support every ride, package, and scheduled trip."
+          tone={DS.green}
+        />
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
           {[
             { emoji:'🪪', title:'Gov-ID Verification', desc:'All drivers verified with Jordan Sanad eKYC system', color:DS.cyan  },
@@ -2329,6 +2400,11 @@ export function WaselPlusPage() {
     <Protected>
       <PageShell>
       <SectionHead emoji="💎" title="Wasel Plus" titleAr="واصل بلس" sub="10% off all rides · Priority booking · Exclusive perks" color={DS.gold} />
+        <CoreExperienceBanner
+          title="Premium membership with product-level value"
+          detail="Wasel Plus is framed as a cleaner upgrade to the same network experience: better pricing, better access, and better reassurance without changing the core product language."
+          tone={DS.gold}
+        />
         {subscribed ? (
           <div style={{ background:DS.card, borderRadius:r(20), padding:'60px 28px', textAlign:'center', border:`1px solid ${DS.gold}25` }}>
             <div style={{ fontSize:'4rem', marginBottom:16 }}>👑</div>
@@ -2375,6 +2451,11 @@ export function ProfilePage() {
     <Protected>
       <PageShell>
         <SectionHead emoji="👤" title="My Profile" titleAr="ملفي الشخصي" sub="Account settings · Trust score · Verification" color={DS.cyan} />
+        <CoreExperienceBanner
+          title="Identity, trust, and account controls in one place"
+          detail="Profile now reads as a control center for the Wasel network: who you are, how trusted you are, and which tools protect your future bookings, packages, and payments."
+          tone={DS.cyan}
+        />
         <div style={{ display:'grid', gap:14 }}>
           {/* Avatar card */}
           <div style={{ background:DS.card, borderRadius:r(20), padding:'32px 28px', border:`1px solid ${DS.border}`, display:'flex', alignItems:'center', gap:20 }}>
@@ -2429,3 +2510,4 @@ export const PageHeader = SectionHead as any;
 export const Pill = ({ label, color }: { label:string; color:string }) => (
   <span style={pill(color)}>{label}</span>
 );
+

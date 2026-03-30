@@ -3,7 +3,7 @@
  * Shared with the app's core navigation model for consistent UX.
  */
 
-import { Bus, Home, Search, PlusCircle, Package } from 'lucide-react';
+import { Bus, Clock, Search, PlusCircle, Package } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router';
 import { CORE_NAV_ITEMS } from '../config/user-navigation';
@@ -16,10 +16,10 @@ const BORDER = 'rgba(0,200,232,0.12)';
 const F = "-apple-system,'Inter','Cairo',sans-serif";
 
 const ICONS = {
-  dashboard: Home,
   find: Search,
   post: PlusCircle,
   packages: Package,
+  trips: Clock,
   bus: Bus,
 } as const;
 

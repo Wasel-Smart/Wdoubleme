@@ -4,6 +4,7 @@ import { translations, Language } from '../locales/translations';
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
   t: (key: string) => string;
   dir: 'ltr' | 'rtl';
 }
@@ -46,6 +47,10 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     document.documentElement.lang = lang;
   }, []);
 
+  const toggleLanguage = useCallback(() => {
+    setLanguage(language === 'ar' ? 'en' : 'ar');
+  }, [language, setLanguage]);
+
   useEffect(() => {
     // Set initial dir attribute
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
@@ -70,9 +75,10 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   const value = useMemo(() => ({
     language,
     setLanguage,
+    toggleLanguage,
     t,
     dir
-  }), [language, setLanguage, t, dir]);
+  }), [language, setLanguage, toggleLanguage, t, dir]);
 
   return (
     <LanguageContext.Provider value={value}>

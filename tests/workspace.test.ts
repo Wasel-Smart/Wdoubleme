@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getConfig, getEnv, hasEnv } from '@/utils/env';
+import { getAuthCallbackUrl, getConfig, getEnv, getWhatsAppSupportUrl, hasEnv } from '@/utils/env';
 
 describe('workspace configuration utilities', () => {
   it('returns defaults when environment variables are missing', () => {
@@ -12,7 +12,17 @@ describe('workspace configuration utilities', () => {
 
     expect(config.appUrl).toBeTruthy();
     expect(config.appName).toBeTruthy();
+    expect(config.authCallbackPath.startsWith('/')).toBe(true);
     expect(typeof config.isProd).toBe('boolean');
     expect(typeof config.isDev).toBe('boolean');
+  });
+
+  it('builds stable helper URLs', () => {
+    expect(getAuthCallbackUrl('https://wasel.example')).toContain('/app/auth/callback');
+    const supportUrl = getWhatsAppSupportUrl('Need help');
+    expect(typeof supportUrl).toBe('string');
+    if (supportUrl) {
+      expect(supportUrl).toContain('text=Need%20help');
+    }
   });
 });

@@ -15,7 +15,7 @@ Corridor-first ride marketplace connecting passengers, drivers, businesses, and 
 | State | TanStack Query v5 |
 | UI Primitives | Radix UI |
 | Payments | Stripe |
-| Notifications | Firebase Cloud Messaging |
+| Notifications | Web Notifications API + Service Worker |
 | Error Monitoring | Sentry |
 | Testing | Vitest + Playwright |
 
@@ -98,6 +98,7 @@ src/
 ## Environment Variables
 
 See `.env.example` for all required and optional variables.  
+Use `VITE_EDGE_FUNCTION_NAME` when your backend edge function name differs from the default slug, `VITE_API_URL` for a custom API base, and `VITE_SUPPORT_WHATSAPP_NUMBER` / `VITE_AUTH_CALLBACK_PATH` for production auth and support routing.
 **Never commit `.env` files.** They are in `.gitignore`.
 
 ---
@@ -111,3 +112,10 @@ npm run build
 ```
 
 Recommended: Set `VITE_APP_URL` to your production domain before building.
+
+---
+
+## Notification Runtime
+
+The live frontend notification path uses the browser Notifications API together with the single service worker at `public/sw.js`.
+Firebase client configuration is not part of the current web runtime.

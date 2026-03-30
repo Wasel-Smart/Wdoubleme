@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts'],
+    setupFiles: ['./tests/setup.ts'],
     environmentOptions: {
       jsdom: { url: 'http://localhost/' },
     },
@@ -20,9 +20,6 @@ export default defineConfig({
     include: [
       'tests/**/*.test.ts',
       'tests/**/*.test.tsx',
-      'src/tests/example.test.tsx',
-      'src/tests/unit/**/*.test.ts?(x)',
-      'src/tests/accessibility/**/*.test.ts?(x)',
     ],
     exclude: [
       'node_modules',
@@ -34,7 +31,7 @@ export default defineConfig({
       reporter: ['text', 'html'],
       exclude: [
         'node_modules',
-        'src/tests',
+        'tests',
         '**/*.d.ts',
         'vite.config.ts',
         'vitest.config.ts',

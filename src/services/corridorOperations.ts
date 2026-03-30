@@ -14,7 +14,11 @@ import {
   type TripSummary,
 } from '../utils/routeIntelligence';
 import { SmartPricingEngine, type SeatPricingModel } from '../utils/pricing/SeatPricing';
-import { packageTrackingService, type PackagePaymentEscrow, type PackageTracking } from './packageTrackingService';
+import {
+  packageTrackingService,
+  type PackagePaymentEscrow,
+  type PackageTracking,
+} from './packageTrackingService';
 import { generateId } from '../utils/api';
 
 export interface BusinessEmployee {
@@ -113,7 +117,9 @@ function buildTripCandidates(route: CityRoute, seatsPerTrip: number): TripSummar
     driverRating: 4.7 + index * 0.1,
     driverTrustScore: 84 + index * 4,
     pricePerSeatJOD: Number((route.distanceKm / 22 + index * 0.35).toFixed(2)),
-    estimatedArrivalTime: new Date(now + (hours + Math.max(1, Math.round(route.durationMin / 60))) * 60 * 60 * 1000).toISOString(),
+    estimatedArrivalTime: new Date(
+      now + (hours + Math.max(1, Math.round(route.durationMin / 60))) * 60 * 60 * 1000,
+    ).toISOString(),
     waypoints: index === 0 ? ['Jerash'] : undefined,
   }));
 }
@@ -199,17 +205,13 @@ function buildDefaultSchoolStudents(): SchoolStudentDraft[] {
       name: 'Yousef Khalil',
       age: 9,
       grade: 'Grade 4',
-      guardians: [
-        { name: 'Reem Khalil', relationship: 'Mother', phone: '+962790000113' },
-      ],
+      guardians: [{ name: 'Reem Khalil', relationship: 'Mother', phone: '+962790000113' }],
     },
   ];
 }
 
 function computeBusinessInvoice(employees: BusinessEmployee[]): number {
-  return Number(
-    employees.reduce((total, employee) => total + employee.monthlySpendJOD, 0).toFixed(2),
-  );
+  return Number(employees.reduce((total, employee) => total + employee.monthlySpendJOD, 0).toFixed(2));
 }
 
 export async function buildBusinessAccountSnapshot(

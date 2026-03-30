@@ -155,7 +155,15 @@ export function mapBackendProfile(args: {
 
   return {
     id: authUser.id,
-    name: String(profile?.full_name ?? profile?.fullName ?? profile?.name ?? metadata.full_name ?? metadata.name ?? authUser.email?.split('@')[0] ?? 'Wasel User'),
+    name: String(
+      profile?.full_name ??
+      profile?.fullName ??
+      profile?.name ??
+      metadata.full_name ??
+      metadata.name ??
+      authUser.email?.split('@')[0] ??
+      'Wasel User',
+    ),
     email: authUser.email ?? '',
     role,
     verified: sanadVerified || verificationLevel === 'level_2' || verificationLevel === 'level_3',
@@ -174,7 +182,10 @@ export function mapBackendProfile(args: {
     sanadVerified,
     verificationLevel,
     trustScore: deriveTrustScore({ verificationLevel, rating, trips }),
-    walletStatus: profile?.wallet_status === 'limited' || profile?.wallet_status === 'frozen' ? profile.wallet_status : 'active',
+    walletStatus:
+      profile?.wallet_status === 'limited' || profile?.wallet_status === 'frozen'
+        ? profile.wallet_status
+        : 'active',
     backendMode: 'supabase',
   };
 }

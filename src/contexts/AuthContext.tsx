@@ -4,6 +4,7 @@ import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { supabase, isSupabaseConfigured } from '../utils/supabase/client';
 import { authAPI } from '../services/auth';
 import { useLocalAuth } from './LocalAuth';
+import { getAuthCallbackUrl } from '../utils/env';
 
 type Profile = {
   id: string;
@@ -195,8 +196,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     initializeAuth();
 
+    const handleAuthMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'wasel-auth-complete') return;
+
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (!mounted || !data.session) return;
+
+        setSession(data.session);
+        setUser(data.session.user);
+        void fetchProfile(data.session.user.id, true);
+      } catch (error) {
+        if (import.meta.env?.DEV) {
+          console.warn('Auth callback sync warning:', error);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleAuthMessage);
+
     return () => {
       mounted = false;
+      window.removeEventListener('message', handleAuthMessage);
       subscription.unsubscribe();
     };
   }, [fetchProfile, localAuth.loading, localAuth.user]);
@@ -228,7 +251,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getAuthCallbackUrl(window.location.origin),
           skipBrowserRedirect: true,
         },
       });
@@ -262,7 +285,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getAuthCallbackUrl(window.location.origin),
           skipBrowserRedirect: true,
         },
       });
@@ -340,7 +363,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!supabase) return { error: new Error('Backend not configured') };
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: getAuthCallbackUrl(window.location.origin),
       });
       return { error: error ?? null };
     } catch (error: unknown) {

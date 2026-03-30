@@ -43,32 +43,82 @@ type NavItem = {
 // ── Nav definition (production-safe — no internal testing tools) ──────────────
 const PRODUCT_NAV_GROUPS = [
   {
-    id: 'trips', label: 'Trips', labelAr: 'Trips',
-    items: [
-      { emoji: 'R', label: 'Find a Ride', labelAr: 'Find a Ride', desc: 'Intercity ride marketplace', descAr: 'Intercity ride marketplace', path: '/find-ride', color: C.cyan, badge: null },
-      { emoji: '+', label: 'Offer a Ride', labelAr: 'Offer a Ride', desc: 'Create supply inside active corridors', descAr: 'Create supply inside active corridors', path: '/offer-ride', color: C.blue, badge: null },
-    ],
+    id: 'find',
+    label: 'Find Ride',
+    labelAr: 'ابحث عن رحلة',
+    direct: true,
+    path: '/find-ride',
+    emoji: 'R',
+    desc: 'Book verified intercity rides',
+    descAr: 'احجز رحلات موثقة بين المدن',
+    color: C.cyan,
+    badge: null,
+    items: [],
   },
   {
-    id: 'packages', label: 'Returns', labelAr: 'Returns',
-    items: [
-      { emoji: 'P', label: 'Package Tracking', labelAr: 'Package Tracking', desc: 'Escrow, QR verification, and tracking', descAr: 'Escrow, QR verification, and tracking', path: '/packages', color: C.gold, badge: null },
-      { emoji: 'R3', label: 'Raje3 Returns', labelAr: 'Raje3 Returns', desc: 'Reverse logistics for retail and e-commerce', descAr: 'Reverse logistics for retail and e-commerce', path: '/raje3', color: C.gold, badge: 'RAJE3' },
-    ],
+    id: 'offer',
+    label: 'Offer Ride',
+    labelAr: 'أضف رحلة',
+    direct: true,
+    path: '/offer-ride',
+    emoji: '+',
+    desc: 'Share seats and unlock package demand',
+    descAr: 'شارك المقاعد وافتح طلب الطرود',
+    color: C.blue,
+    badge: null,
+    items: [],
   },
   {
-    id: 'wallet', label: 'Wallet', labelAr: 'Wallet',
-    direct: true, path: '/wallet', emoji: '$',
-    desc: 'Payments, escrow, balances, and earnings in one place',
-    descAr: 'Payments, escrow, balances, and earnings in one place',
-    color: C.gold, badge: 'LIVE', items: [],
+    id: 'packages',
+    label: 'Packages',
+    labelAr: 'الطرود',
+    direct: true,
+    path: '/packages',
+    emoji: 'P',
+    desc: 'Send and track deliveries on live routes',
+    descAr: 'أرسل وتتبع الطرود على المسارات المباشرة',
+    color: C.gold,
+    badge: 'LIVE',
+    items: [],
   },
   {
-    id: 'more', label: 'More', labelAr: 'More',
-    items: [
-      { emoji: 'B', label: 'Bus', labelAr: 'Bus', desc: 'Fixed-price intercity coaches', descAr: 'Fixed-price intercity coaches', path: '/bus', color: C.green, badge: null },
-      { emoji: 'U', label: 'Profile', labelAr: 'Profile', desc: 'Account overview and identity context', descAr: 'Account overview and identity context', path: '/profile', color: C.cyan, badge: null },
-    ],
+    id: 'my-trips',
+    label: 'My Trips',
+    labelAr: 'رحلاتي',
+    direct: true,
+    path: '/my-trips',
+    emoji: 'T',
+    desc: 'Manage active bookings and trip history',
+    descAr: 'أدر حجوزاتك وسجل رحلاتك',
+    color: C.cyan,
+    badge: null,
+    items: [],
+  },
+  {
+    id: 'bus',
+    label: 'Bus',
+    labelAr: 'الحافلات',
+    direct: true,
+    path: '/bus',
+    emoji: 'B',
+    desc: 'Scheduled intercity coaches',
+    descAr: 'حافلات جدولية بين المدن',
+    color: C.green,
+    badge: null,
+    items: [],
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    labelAr: 'الملف',
+    direct: true,
+    path: '/profile',
+    emoji: 'U',
+    desc: 'Verification, trust, and account settings',
+    descAr: 'التحقق والثقة وإعدادات الحساب',
+    color: C.cyan,
+    badge: null,
+    items: [],
   },
 ] as const;
 
@@ -107,6 +157,31 @@ function Badge({ label, color = C.cyan }: { label: string; color?: string }) {
       background: `${col}18`, color: col, border: `1px solid ${col}30`,
       flexShrink: 0,
     }}>{label}</span>
+  );
+}
+
+function AppPill({ ar }: { ar: boolean }) {
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        height: 30,
+        padding: '0 12px',
+        borderRadius: R.full,
+        background: 'rgba(0,200,232,0.08)',
+        border: '1px solid rgba(0,200,232,0.18)',
+        color: 'rgba(239,246,255,0.82)',
+        fontSize: '0.72rem',
+        fontWeight: 700,
+        fontFamily: F,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.green, boxShadow: `0 0 10px ${C.green}` }} />
+      {ar ? 'شبكة الرحلات والطرود' : 'Ride + Package Network'}
+    </div>
   );
 }
 
@@ -332,11 +407,10 @@ function UserMenu({
   const balanceDisplay = CurrencyService.getInstance().formatFromJOD(user.balance);
 
   const menuItems = [
-    { label: ar ? 'لوحة التحكم'   : 'Dashboard',       emoji: '📊', path: '/dashboard' },
-    { label: ar ? 'رحلاتي'        : 'My Trips',         emoji: '🚗', path: '/find-ride'  },
-    { label: ar ? 'المحفظة'       : 'Wallet',           emoji: '💳', path: '/wallet'     },
-    { label: ar ? 'ملفي الشخصي'   : 'Profile',          emoji: '👤', path: '/profile'    },
-    { label: ar ? 'واصل بلس ✦' : 'Wasel Plus ✦', emoji: '💎', path: '/plus'     },
+    { label: ar ? 'رحلاتي' : 'My Trips', emoji: '🚗', path: '/my-trips' },
+    { label: ar ? 'الطرود' : 'Packages', emoji: '📦', path: '/packages' },
+    { label: ar ? 'ملفي الشخصي' : 'Profile', emoji: '👤', path: '/profile' },
+    { label: ar ? 'واصل بلس ✦' : 'Wasel Plus ✦', emoji: '💎', path: '/plus' },
   ];
 
   return (
@@ -526,6 +600,10 @@ function MobileDrawer({ open, onClose, onNavigate, user, onSignOut, ar }: {
           <div style={{ padding: '14px 20px', background: 'rgba(0,200,232,0.05)', borderBottom: '1px solid rgba(0,200,232,0.10)' }}>
             <div style={{ fontWeight: 700, color: '#fff', fontFamily: F, fontSize: '0.9rem' }}>{user.name}</div>
             <div style={{ fontSize: '0.72rem', color: 'rgba(148,163,184,0.6)', fontFamily: F }}>{user.email}</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              <Badge label="TRUST" color={C.green} />
+              <Badge label="LIVE" color={C.cyan} />
+            </div>
           </div>
         )}
 
@@ -534,13 +612,18 @@ function MobileDrawer({ open, onClose, onNavigate, user, onSignOut, ar }: {
           {PRODUCT_NAV_GROUPS.filter(isVisibleNavGroup).map(group => (
             <div key={group.id} style={{ padding: '12px 20px', borderBottom: '1px solid rgba(0,200,232,0.06)' }}>
               <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'rgba(148,163,184,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontFamily: F }}>
-                {ar ? group.labelAr : group.label}
+                {ar ? 'الخدمة' : 'Service'}
               </div>
               {'direct' in group && group.direct ? (
-                <button onClick={() => { onNavigate((group as any).path); onClose(); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', background: 'none', border: 'none', cursor: 'pointer', width: '100%' }}>
-                  <span style={{ fontSize: '1.1rem' }}>{(group as any).emoji}</span>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#fff', fontFamily: F }}>
-                    {ar ? group.labelAr : group.label}
+                <button onClick={() => { onNavigate((group as any).path); onClose(); }} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+                  <span style={{ fontSize: '1.1rem', marginTop: 2 }}>{(group as any).emoji}</span>
+                  <span style={{ display: 'grid', gap: 4, flex: 1 }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#fff', fontFamily: F }}>
+                      {ar ? group.labelAr : group.label}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: 'rgba(148,163,184,0.65)', fontFamily: F, lineHeight: 1.5 }}>
+                      {ar ? (group as any).descAr : (group as any).desc}
+                    </span>
                   </span>
                   {(group as any).badge && <Badge label={(group as any).badge} />}
                 </button>
@@ -649,6 +732,11 @@ export default function WaselRoot() {
             <WaselLogo size={32} theme="light" variant="full" />
           </button>
 
+          <div className="wrl-brand-pill" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <style>{`@media (max-width: 1180px) { .wrl-brand-pill { display: none !important; } }`}</style>
+            <AppPill ar={ar} />
+          </div>
+
           {/* Desktop Nav — hidden below 900px via inline style on wrapper */}
           <nav
             style={{
@@ -662,7 +750,7 @@ export default function WaselRoot() {
               @media (min-width: 900px) { .wrl-mobile-burger { display: none !important; } }
             `}</style>
 
-            {PRODUCT_NAV_GROUPS.filter(isVisibleNavGroup).map(group => {
+            {PRODUCT_NAV_GROUPS.filter(isVisibleNavGroup).map((group, index) => {
               const isDirect = 'direct' in group && group.direct;
               const isActive = activeGroup === group.id;
               return (
@@ -701,7 +789,7 @@ export default function WaselRoot() {
                     <NavDropdown
                       group={group}
                       onNavigate={p => { navigate(p); setActiveGroup(null); }}
-                      align={group.id === 'trips' ? 'left' : 'center'}
+                      align={index === 0 ? 'left' : 'center'}
                       ar={ar}
                     />
                   )}
@@ -796,7 +884,26 @@ export default function WaselRoot() {
       />
 
       {/* ── Page Content ── */}
-      <main id="main-content" role="main" aria-label={ar ? 'المحتوى الرئيسي' : 'Main content'} tabIndex={-1}>
+      <main
+        id="main-content"
+        role="main"
+        aria-label={ar ? 'المحتوى الرئيسي' : 'Main content'}
+        tabIndex={-1}
+        style={{
+          position: 'relative',
+          isolation: 'isolate',
+        }}
+      >
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background: 'radial-gradient(circle at top center, rgba(0,200,232,0.05), transparent 30%), radial-gradient(circle at 80% 20%, rgba(240,168,48,0.04), transparent 24%)',
+            zIndex: -1,
+          }}
+        />
         <Outlet />
       </main>
 

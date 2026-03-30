@@ -7,13 +7,132 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { authAPI } from '../services/auth';
 import { initSupabaseListeners, isSupabaseConfigured, supabase } from '../utils/supabase/client';
-import {
-  mapBackendProfile,
-  createDemoUserProfile,
-  type WaselUserProfile,
-} from '../domains/trust/profile';
 
-export type WaselUser = WaselUserProfile;
+export interface WaselUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: 'rider' | 'driver' | 'both';
+  balance: number;
+  rating: number;
+  trips: number;
+  verified: boolean;
+  sanadVerified: boolean;
+  verificationLevel: string;
+  walletStatus: 'active' | 'limited' | 'frozen';
+  avatar?: string;
+  joinedAt: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  trustScore: number;
+  backendMode: 'supabase' | 'demo';
+}
+
+function computeTrustScore(user: Pick<WaselUser, 'verified' | 'sanadVerified' | 'emailVerified' | 'phoneVerified' | 'trips' | 'rating'>) {
+  let score = 45;
+  if (user.emailVerified) score += 10;
+  if (user.phoneVerified) score += 10;
+  if (user.verified || user.sanadVerified) score += 15;
+  score += Math.min(user.trips, 50) * 0.4;
+  score += Math.max(0, Math.min(user.rating, 5)) * 2;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function createDemoUserProfile(input: {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  verified: boolean;
+  balance: number;
+  trips: number;
+  rating: number;
+}): WaselUser {
+  const emailVerified = true;
+  const phoneVerified = Boolean(input.phone);
+  const sanadVerified = input.verified;
+  const verificationLevel = sanadVerified
+    ? 'level_3'
+    : phoneVerified
+      ? 'level_1'
+      : 'level_0';
+
+  const baseUser: WaselUser = {
+    id: input.id,
+    name: input.name,
+    email: input.email,
+    phone: input.phone,
+    role: 'rider',
+    balance: input.balance,
+    rating: input.rating,
+    trips: input.trips,
+    verified: input.verified,
+    sanadVerified,
+    verificationLevel,
+    walletStatus: 'active',
+    avatar: undefined,
+    joinedAt: new Date().toISOString().slice(0, 10),
+    emailVerified,
+    phoneVerified,
+    trustScore: 0,
+    backendMode: 'demo',
+  };
+
+  return {
+    ...baseUser,
+    trustScore: computeTrustScore(baseUser),
+  };
+}
+
+function mapBackendProfile({
+  authUser,
+  profile,
+}: {
+  authUser: any;
+  profile: any;
+}): WaselUser {
+  const name =
+    profile?.full_name ||
+    authUser?.user_metadata?.full_name ||
+    authUser?.user_metadata?.name ||
+    authUser?.email?.split('@')?.[0] ||
+    'Wasel User';
+  const phone = profile?.phone_number ?? authUser?.phone ?? undefined;
+  const verified = Boolean(profile?.verified ?? profile?.sanad_verified ?? false);
+  const sanadVerified = Boolean(profile?.sanad_verified ?? verified);
+  const emailVerified = Boolean(authUser?.email_confirmed_at || authUser?.confirmed_at || authUser?.user_metadata?.emailVerified);
+  const phoneVerified = Boolean(profile?.phone_verified ?? authUser?.phone_confirmed_at ?? phone);
+  const verificationLevel = profile?.verification_level || (sanadVerified ? 'level_3' : phoneVerified ? 'level_1' : 'level_0');
+  const walletStatus = profile?.wallet_status || 'active';
+  const role = profile?.role || 'rider';
+
+  const baseUser: WaselUser = {
+    id: authUser?.id || profile?.id || `user-${Date.now()}`,
+    name,
+    email: authUser?.email || profile?.email || '',
+    phone,
+    role,
+    balance: Number(profile?.wallet_balance ?? profile?.balance ?? 0),
+    rating: Number(profile?.rating ?? 5),
+    trips: Number(profile?.trip_count ?? profile?.trips ?? 0),
+    verified,
+    sanadVerified,
+    verificationLevel,
+    walletStatus,
+    avatar: profile?.avatar_url ?? authUser?.user_metadata?.avatar_url ?? undefined,
+    joinedAt: String(profile?.created_at ?? authUser?.created_at ?? new Date().toISOString()).slice(0, 10),
+    emailVerified,
+    phoneVerified,
+    trustScore: 0,
+    backendMode: 'supabase',
+  };
+
+  return {
+    ...baseUser,
+    trustScore: computeTrustScore(baseUser),
+  };
+}
 
 interface LocalAuthCtx {
   user: WaselUser | null;

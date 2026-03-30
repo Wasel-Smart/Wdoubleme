@@ -111,7 +111,7 @@ export async function fetchBusRoutes(query: BusRouteQuery): Promise<BusRoute[]> 
 
   const mapped = list
     .filter((item: unknown) => item && typeof item === 'object')
-    .map((item) => item as Record<string, unknown>);
+    .map((item) => item as unknown as Record<string, unknown>);
 
   const busOnly = mapped.filter(looksLikeBusTrip);
   const candidate = busOnly.length > 0 ? busOnly : mapped;
