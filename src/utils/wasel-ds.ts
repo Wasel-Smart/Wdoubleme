@@ -69,8 +69,8 @@ export const C = {
 } as const;
 
 // ── Font Families ─────────────────────────────────────────────────────────────
-export const F = "-apple-system, BlinkMacSystemFont, 'Inter', 'Cairo', 'Tajawal', sans-serif";
-export const FA = "'Cairo', 'Tajawal', sans-serif";         // Arabic-primary
+export const F = "var(--wasel-font-sans, 'Plus Jakarta Sans', 'Cairo', 'Tajawal', sans-serif)";
+export const FA = "var(--wasel-font-arabic, 'Cairo', 'Tajawal', sans-serif)";         // Arabic-primary
 export const FM = "'JetBrains Mono', 'Fira Mono', monospace"; // Monospace
 
 // ── Typography Scale ──────────────────────────────────────────────────────────

@@ -11,26 +11,40 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Strictness — tightened for production */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    /* ── Strict mode — production-grade enforcement ───────────────────────── */
+    "strict": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+    "forceConsistentCasingInFileNames": true,
+
+    /* ── Interop ──────────────────────────────────────────────────────────── */
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
 
-    /* Path aliases */
+    /* ── Path aliases ─────────────────────────────────────────────────────── */
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
 
-    /* Type roots */
+    /* ── Type roots ───────────────────────────────────────────────────────── */
     "types": ["vite/client", "node"]
   },
   "include": [
     "src/main.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "src/**/*.d.ts",
     "vite.config.ts",
     "vitest.config.ts",

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const useDemoData = process.env.PLAYWRIGHT_USE_DEMO_DATA === 'true';
+const useDemoData = process.env.PLAYWRIGHT_USE_DEMO_DATA !== 'false';
 
 export default defineConfig({
   testDir: './tests/e2e',

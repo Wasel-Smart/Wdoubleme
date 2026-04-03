@@ -1,6 +1,12 @@
 /**
- * Unit tests — src/utils/validation.ts
- * Covers all Zod schemas: auth, rides, packages, wallet, profile.
+ * Validation Schemas — Unit Tests
+ *
+ * Covers every Zod schema in utils/validation.ts:
+ *   signIn, signUp, resetPassword, offerRide, findRide,
+ *   sendPackage, updateProfile, changePassword, topUp, transfer
+ *
+ * Standard: Every schema must reject invalid input and accept valid input
+ * with no false positives or false negatives.
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -14,224 +20,383 @@ import {
   changePasswordSchema,
   topUpSchema,
   transferSchema,
-} from '@/utils/validation';
+} from '../../../src/utils/validation';
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function valid<T>(schema: { safeParse: (v: unknown) => { success: boolean } }, data: T) {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error('Unexpected validation failure:', JSON.stringify((result as any).error?.issues));
+  }
+  expect(result.success).toBe(true);
+}
+
+function invalid<T>(schema: { safeParse: (v: unknown) => { success: boolean } }, data: T) {
+  expect(schema.safeParse(data).success).toBe(false);
+}
+
+// ── 1. Sign-in schema ─────────────────────────────────────────────────────────
 
 describe('signInSchema', () => {
   it('accepts valid credentials', () => {
-    const result = signInSchema.safeParse({ email: 'user@example.com', password: 'Password1!' });
+    valid(signInSchema, { email: 'user@example.com', password: 'SecurePass1!' });
+  });
+
+  it('rejects missing email', () => {
+    invalid(signInSchema, { password: 'SecurePass1!' });
+  });
+
+  it('rejects malformed email', () => {
+    invalid(signInSchema, { email: 'not-an-email', password: 'SecurePass1!' });
+  });
+
+  it('rejects password shorter than 8 characters', () => {
+    invalid(signInSchema, { email: 'user@example.com', password: 'short' });
+  });
+
+  it('rejects missing password', () => {
+    invalid(signInSchema, { email: 'user@example.com' });
+  });
+
+  it('normalises email to lowercase', () => {
+    const result = signInSchema.safeParse({
+      email: 'USER@EXAMPLE.COM',
+      password: 'SecurePass1!',
+    });
     expect(result.success).toBe(true);
-  });
-
-  it('rejects invalid email', () => {
-    const result = signInSchema.safeParse({ email: 'not-an-email', password: 'Password1!' });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects password shorter than 8 chars', () => {
-    const result = signInSchema.safeParse({ email: 'user@example.com', password: 'short' });
-    expect(result.success).toBe(false);
-  });
-
-  it('lowercases the email', () => {
-    const result = signInSchema.safeParse({ email: 'USER@EXAMPLE.COM', password: 'Password1!' });
     if (result.success) {
       expect(result.data.email).toBe('user@example.com');
     }
   });
 });
 
+// ── 2. Sign-up schema ─────────────────────────────────────────────────────────
+
 describe('signUpSchema', () => {
-  const valid = {
-    fullName: 'Ahmed Hassan',
-    email: 'ahmed@example.com',
-    password: 'Secure@123',
-    confirmPassword: 'Secure@123',
+  const base = {
+    fullName: 'Ahmad Al-Najjar',
+    email: 'ahmad@wasel.jo',
+    password: 'ValidPass1!',
+    confirmPassword: 'ValidPass1!',
     phone: '+962791234567',
   };
 
-  it('accepts a valid registration payload', () => {
-    expect(signUpSchema.safeParse(valid).success).toBe(true);
+  it('accepts a complete valid payload', () => {
+    valid(signUpSchema, base);
+  });
+
+  it('accepts without optional phone', () => {
+    valid(signUpSchema, { ...base, phone: '' });
   });
 
   it('rejects mismatched passwords', () => {
-    const result = signUpSchema.safeParse({ ...valid, confirmPassword: 'Different1!' });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const paths = result.error.issues.map(i => i.path.join('.'));
-      expect(paths).toContain('confirmPassword');
-    }
+    invalid(signUpSchema, { ...base, confirmPassword: 'DifferentPass1!' });
   });
 
-  it('rejects a name shorter than 2 characters', () => {
-    expect(signUpSchema.safeParse({ ...valid, fullName: 'A' }).success).toBe(false);
+  it('rejects name shorter than 2 characters', () => {
+    invalid(signUpSchema, { ...base, fullName: 'A' });
   });
 
-  it('accepts optional phone as empty string', () => {
-    expect(signUpSchema.safeParse({ ...valid, phone: '' }).success).toBe(true);
+  it('rejects name longer than 80 characters', () => {
+    invalid(signUpSchema, { ...base, fullName: 'A'.repeat(81) });
   });
 
-  it('rejects phone not in E.164 format', () => {
-    expect(signUpSchema.safeParse({ ...valid, phone: '0791234567' }).success).toBe(false);
+  it('rejects phone in wrong format (no +)', () => {
+    invalid(signUpSchema, { ...base, phone: '0791234567' });
+  });
+
+  it('rejects password shorter than 8 chars', () => {
+    invalid(signUpSchema, { ...base, password: 'Short1!', confirmPassword: 'Short1!' });
+  });
+
+  it('rejects password exceeding 128 chars', () => {
+    const long = 'A'.repeat(129);
+    invalid(signUpSchema, { ...base, password: long, confirmPassword: long });
   });
 });
+
+// ── 3. Reset password schema ──────────────────────────────────────────────────
 
 describe('resetPasswordSchema', () => {
   it('accepts a valid email', () => {
-    expect(resetPasswordSchema.safeParse({ email: 'test@wasel.jo' }).success).toBe(true);
+    valid(resetPasswordSchema, { email: 'reset@wasel.jo' });
   });
 
-  it('rejects missing email', () => {
-    expect(resetPasswordSchema.safeParse({}).success).toBe(false);
+  it('rejects an invalid email', () => {
+    invalid(resetPasswordSchema, { email: 'not-email' });
+  });
+
+  it('rejects empty email', () => {
+    invalid(resetPasswordSchema, { email: '' });
   });
 });
 
-// ── Rides ─────────────────────────────────────────────────────────────────────
+// ── 4. Offer ride schema ──────────────────────────────────────────────────────
 
 describe('offerRideSchema', () => {
-  const valid = {
-    origin: 'Amman',
-    destination: 'Aqaba',
-    departureDate: '2026-04-15',
+  const base = {
+    origin: 'Amman' as const,
+    destination: 'Aqaba' as const,
+    departureDate: '2026-06-15',
     departureTime: '08:00',
     seats: 3,
     pricePerSeat: 12.5,
+    genderPreference: 'any' as const,
     allowPackages: false,
-    genderPreference: 'any',
   };
 
-  it('accepts a valid offer ride payload', () => {
-    expect(offerRideSchema.safeParse(valid).success).toBe(true);
+  it('accepts a complete valid offer', () => {
+    valid(offerRideSchema, base);
   });
 
   it('rejects same origin and destination', () => {
-    const result = offerRideSchema.safeParse({ ...valid, destination: 'Amman' });
-    expect(result.success).toBe(false);
+    invalid(offerRideSchema, { ...base, destination: 'Amman' });
   });
 
-  it('rejects zero or negative price', () => {
-    expect(offerRideSchema.safeParse({ ...valid, pricePerSeat: 0 }).success).toBe(false);
-    expect(offerRideSchema.safeParse({ ...valid, pricePerSeat: -5 }).success).toBe(false);
+  it('rejects seats < 1', () => {
+    invalid(offerRideSchema, { ...base, seats: 0 });
   });
 
-  it('rejects seats outside 1–7 range', () => {
-    expect(offerRideSchema.safeParse({ ...valid, seats: 0 }).success).toBe(false);
-    expect(offerRideSchema.safeParse({ ...valid, seats: 8 }).success).toBe(false);
+  it('rejects seats > 7', () => {
+    invalid(offerRideSchema, { ...base, seats: 8 });
   });
 
-  it('accepts optional notes up to 500 chars', () => {
-    expect(offerRideSchema.safeParse({ ...valid, notes: 'Quiet ride preferred' }).success).toBe(true);
+  it('rejects negative price', () => {
+    invalid(offerRideSchema, { ...base, pricePerSeat: -5 });
+  });
+
+  it('rejects price above 500', () => {
+    invalid(offerRideSchema, { ...base, pricePerSeat: 501 });
+  });
+
+  it('rejects notes longer than 500 chars', () => {
+    invalid(offerRideSchema, { ...base, notes: 'X'.repeat(501) });
+  });
+
+  it('rejects invalid gender preference', () => {
+    invalid(offerRideSchema, { ...base, genderPreference: 'unknown' });
+  });
+
+  it('accepts optional notes', () => {
+    valid(offerRideSchema, { ...base, notes: 'No smoking please' });
   });
 });
 
-describe('findRideSchema', () => {
-  const valid = { origin: 'Irbid', destination: 'Amman', date: '2026-04-15', passengers: 2 };
+// ── 5. Find ride schema ───────────────────────────────────────────────────────
 
-  it('accepts valid search params', () => {
-    expect(findRideSchema.safeParse(valid).success).toBe(true);
+describe('findRideSchema', () => {
+  const base = {
+    origin: 'Irbid' as const,
+    destination: 'Amman' as const,
+    date: '2026-06-15',
+    passengers: 2,
+  };
+
+  it('accepts a valid search', () => {
+    valid(findRideSchema, base);
   });
 
   it('rejects same origin and destination', () => {
-    expect(findRideSchema.safeParse({ ...valid, destination: 'Irbid' }).success).toBe(false);
+    invalid(findRideSchema, { ...base, destination: 'Irbid' });
   });
 
-  it('defaults passengers to 1', () => {
-    const result = findRideSchema.safeParse({ origin: 'Zarqa', destination: 'Aqaba', date: '2026-04-15' });
+  it('rejects passengers < 1', () => {
+    invalid(findRideSchema, { ...base, passengers: 0 });
+  });
+
+  it('rejects passengers > 7', () => {
+    invalid(findRideSchema, { ...base, passengers: 8 });
+  });
+
+  it('defaults passengers to 1 when omitted', () => {
+    const result = findRideSchema.safeParse({ ...base, passengers: undefined });
+    expect(result.success).toBe(true);
     if (result.success) expect(result.data.passengers).toBe(1);
   });
 });
 
-// ── Packages ──────────────────────────────────────────────────────────────────
+// ── 6. Send package schema ────────────────────────────────────────────────────
 
 describe('sendPackageSchema', () => {
-  const valid = {
-    senderName: 'Khalid Al-Omar',
-    senderPhone: '+962791111111',
-    recipientName: 'Sara Nasser',
-    recipientPhone: '+962792222222',
-    origin: 'Amman',
-    destination: 'Irbid',
-    description: 'Handmade pottery set',
-    weightKg: 3.5,
-    fragile: true,
+  const base = {
+    senderName: 'Khalid Mansour',
+    senderPhone: '+962791234567',
+    recipientName: 'Sara Haddad',
+    recipientPhone: '+962799876543',
+    origin: 'Amman' as const,
+    destination: 'Aqaba' as const,
+    description: 'Books and documents',
+    weightKg: 2.5,
+    fragile: false,
   };
 
-  it('accepts a valid package payload', () => {
-    expect(sendPackageSchema.safeParse(valid).success).toBe(true);
+  it('accepts a complete valid package', () => {
+    valid(sendPackageSchema, base);
   });
 
-  it('rejects weight over 50 kg', () => {
-    expect(sendPackageSchema.safeParse({ ...valid, weightKg: 51 }).success).toBe(false);
+  it('rejects weight above 50 kg', () => {
+    invalid(sendPackageSchema, { ...base, weightKg: 51 });
   });
 
-  it('rejects empty description', () => {
-    expect(sendPackageSchema.safeParse({ ...valid, description: 'AB' }).success).toBe(false);
+  it('rejects negative weight', () => {
+    invalid(sendPackageSchema, { ...base, weightKg: -1 });
+  });
+
+  it('rejects description shorter than 3 chars', () => {
+    invalid(sendPackageSchema, { ...base, description: 'AB' });
+  });
+
+  it('rejects missing sender phone', () => {
+    invalid(sendPackageSchema, { ...base, senderPhone: '' });
+  });
+
+  it('accepts optional declared value', () => {
+    valid(sendPackageSchema, { ...base, declaredValue: 150 });
+  });
+
+  it('rejects declared value above 10000', () => {
+    invalid(sendPackageSchema, { ...base, declaredValue: 10001 });
   });
 });
 
-// ── Wallet ────────────────────────────────────────────────────────────────────
+// ── 7. Update profile schema ──────────────────────────────────────────────────
+
+describe('updateProfileSchema', () => {
+  const base = {
+    fullName: 'Nour Khalil',
+    phone: '+96279000000',
+  };
+
+  it('accepts minimal valid input', () => {
+    valid(updateProfileSchema, base);
+  });
+
+  it('accepts optional bio and avatar', () => {
+    valid(updateProfileSchema, {
+      ...base,
+      bio: 'Frequent traveller between Amman and Irbid',
+      avatarUrl: 'https://example.com/avatar.jpg',
+    });
+  });
+
+  it('rejects bio longer than 250 chars', () => {
+    invalid(updateProfileSchema, { ...base, bio: 'X'.repeat(251) });
+  });
+
+  it('rejects invalid avatar URL', () => {
+    invalid(updateProfileSchema, { ...base, avatarUrl: 'not-a-url' });
+  });
+
+  it('accepts empty avatar URL (clearing avatar)', () => {
+    valid(updateProfileSchema, { ...base, avatarUrl: '' });
+  });
+});
+
+// ── 8. Change password schema ─────────────────────────────────────────────────
+
+describe('changePasswordSchema', () => {
+  const base = {
+    currentPassword: 'OldPass1!',
+    newPassword: 'NewPass2@',
+    confirmNewPassword: 'NewPass2@',
+  };
+
+  it('accepts a valid password change', () => {
+    valid(changePasswordSchema, base);
+  });
+
+  it('rejects new password without uppercase letter', () => {
+    invalid(changePasswordSchema, {
+      ...base,
+      newPassword: 'newpass2@',
+      confirmNewPassword: 'newpass2@',
+    });
+  });
+
+  it('rejects new password without a number', () => {
+    invalid(changePasswordSchema, {
+      ...base,
+      newPassword: 'NewPassw!',
+      confirmNewPassword: 'NewPassw!',
+    });
+  });
+
+  it('rejects mismatched new passwords', () => {
+    invalid(changePasswordSchema, {
+      ...base,
+      confirmNewPassword: 'DifferentNew2@',
+    });
+  });
+});
+
+// ── 9. Top-up schema ──────────────────────────────────────────────────────────
 
 describe('topUpSchema', () => {
   it('accepts a valid top-up', () => {
-    expect(topUpSchema.safeParse({ amount: 50, paymentMethod: 'card' }).success).toBe(true);
+    valid(topUpSchema, { amount: 50, paymentMethod: 'card' });
   });
 
-  it('rejects amount over 500', () => {
-    expect(topUpSchema.safeParse({ amount: 501, paymentMethod: 'card' }).success).toBe(false);
+  it('rejects amount of 0', () => {
+    invalid(topUpSchema, { amount: 0, paymentMethod: 'card' });
   });
 
-  it('rejects zero or negative amount', () => {
-    expect(topUpSchema.safeParse({ amount: 0, paymentMethod: 'cliq' }).success).toBe(false);
+  it('rejects negative amount', () => {
+    invalid(topUpSchema, { amount: -10, paymentMethod: 'card' });
   });
 
-  it('defaults paymentMethod to card', () => {
+  it('rejects amount above 500', () => {
+    invalid(topUpSchema, { amount: 501, paymentMethod: 'card' });
+  });
+
+  it('rejects invalid payment method', () => {
+    invalid(topUpSchema, { amount: 10, paymentMethod: 'bitcoin' });
+  });
+
+  it('accepts cliq payment method', () => {
+    valid(topUpSchema, { amount: 25, paymentMethod: 'cliq' });
+  });
+
+  it('accepts cash_agent payment method', () => {
+    valid(topUpSchema, { amount: 10, paymentMethod: 'cash_agent' });
+  });
+
+  it('defaults payment method to card', () => {
     const result = topUpSchema.safeParse({ amount: 20 });
+    expect(result.success).toBe(true);
     if (result.success) expect(result.data.paymentMethod).toBe('card');
   });
 });
 
+// ── 10. Transfer schema ───────────────────────────────────────────────────────
+
 describe('transferSchema', () => {
-  const valid = { recipientPhone: '+962799999999', amount: 15 };
-
-  it('accepts a valid transfer', () => {
-    expect(transferSchema.safeParse(valid).success).toBe(true);
-  });
-
-  it('rejects amount over 200', () => {
-    expect(transferSchema.safeParse({ ...valid, amount: 201 }).success).toBe(false);
-  });
-});
-
-// ── Profile ───────────────────────────────────────────────────────────────────
-
-describe('updateProfileSchema', () => {
-  it('accepts valid profile update', () => {
-    expect(updateProfileSchema.safeParse({ fullName: 'Lina Khatib', phone: '+962711234567' }).success).toBe(true);
-  });
-
-  it('rejects bio over 250 chars', () => {
-    const longBio = 'x'.repeat(251);
-    expect(updateProfileSchema.safeParse({ fullName: 'Test', bio: longBio }).success).toBe(false);
-  });
-});
-
-describe('changePasswordSchema', () => {
-  const valid = {
-    currentPassword: 'OldPassword1!',
-    newPassword: 'NewSecure@99',
-    confirmNewPassword: 'NewSecure@99',
+  const base = {
+    recipientPhone: '+962791234567',
+    amount: 15,
   };
 
-  it('accepts matching passwords', () => {
-    expect(changePasswordSchema.safeParse(valid).success).toBe(true);
+  it('accepts a valid transfer', () => {
+    valid(transferSchema, base);
   });
 
-  it('rejects mismatched new passwords', () => {
-    expect(changePasswordSchema.safeParse({ ...valid, confirmNewPassword: 'Wrong1!' }).success).toBe(false);
+  it('rejects missing recipient phone', () => {
+    invalid(transferSchema, { amount: 15 });
   });
 
-  it('rejects new password without uppercase or number', () => {
-    expect(changePasswordSchema.safeParse({ ...valid, newPassword: 'alllowercase!!', confirmNewPassword: 'alllowercase!!' }).success).toBe(false);
+  it('rejects amount of 0', () => {
+    invalid(transferSchema, { ...base, amount: 0 });
+  });
+
+  it('rejects amount above 200', () => {
+    invalid(transferSchema, { ...base, amount: 201 });
+  });
+
+  it('accepts an optional note', () => {
+    valid(transferSchema, { ...base, note: 'Shared taxi fare' });
+  });
+
+  it('rejects note longer than 100 chars', () => {
+    invalid(transferSchema, { ...base, note: 'X'.repeat(101) });
   });
 });

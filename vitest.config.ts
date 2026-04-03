@@ -16,6 +16,15 @@ export default defineConfig({
     },
     env: {
       NODE_ENV: 'test',
+      VITE_APP_NAME: 'Wasel',
+      VITE_APP_URL: 'http://localhost:3000',
+      VITE_SUPPORT_EMAIL: 'support@wasel.jo',
+      VITE_ENABLE_TWO_FACTOR_AUTH: 'false',
+      VITE_ENABLE_EMAIL_NOTIFICATIONS: 'true',
+      VITE_ENABLE_SMS_NOTIFICATIONS: 'true',
+      VITE_ENABLE_WHATSAPP_NOTIFICATIONS: 'true',
+      VITE_AUTH_CALLBACK_PATH: '/app/auth/callback',
+      MODE: 'test',
     },
     include: [
       'tests/**/*.test.ts',
@@ -24,11 +33,13 @@ export default defineConfig({
     exclude: [
       'node_modules',
       'build',
+      'dist',
       'src/features/testing/**',
     ],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],
+      reporter: ['text', 'html', 'lcov', 'json-summary'],
+      include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'node_modules',
         'tests',
@@ -36,7 +47,17 @@ export default defineConfig({
         'vite.config.ts',
         'vitest.config.ts',
         'vitest.config.mjs',
+        'src/main.tsx',
+        'src/**/*.stories.tsx',
+        'src/locales/**',
       ],
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 55,
+        statements: 60,
+      },
     },
+    reporters: ['verbose'],
   },
 });

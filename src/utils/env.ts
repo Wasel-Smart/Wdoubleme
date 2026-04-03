@@ -44,6 +44,9 @@ export function getConfig() {
   const supportSmsNumber = getEnv('VITE_SUPPORT_SMS_NUMBER', supportPhoneNumber)
     .replace(/[^\d+]/g, '')
     .trim();
+  const businessAddress = getEnv('VITE_BUSINESS_ADDRESS', 'Amman, Jordan').trim();
+  const businessAddressAr = getEnv('VITE_BUSINESS_ADDRESS_AR', 'عمان، الأردن').trim();
+  const founderName = getEnv('VITE_FOUNDER_NAME', 'Wasel founder').trim();
   const authCallbackPath = getEnv('VITE_AUTH_CALLBACK_PATH', '/app/auth/callback');
   const mode = getEnv('MODE') || getEnv('VITE_MODE') || getEnv('NODE_ENV', 'development');
   const isProd = mode === 'production';
@@ -61,6 +64,9 @@ export function getConfig() {
     supportEmail,
     supportPhoneNumber,
     supportSmsNumber,
+    businessAddress,
+    businessAddressAr,
+    founderName,
     authCallbackPath: authCallbackPath.startsWith('/') ? authCallbackPath : `/${authCallbackPath}`,
     enableDemoAccount,
     enableTwoFactorAuth,

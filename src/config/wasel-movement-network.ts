@@ -128,7 +128,7 @@ const MARKETPLACE_NODES: MarketplaceNode[] = [
   {
     id: 'drivers',
     title: 'Drivers',
-    summary: 'Drivers open route supply once and monetize seats, empty trunk space, and predictable corridor demand.',
+      summary: 'Drivers offer one corridor route and monetize seats, empty trunk space, and predictable demand.',
     moat: 'Better fill rates make driver earnings harder for generic ride apps to match.',
   },
   {

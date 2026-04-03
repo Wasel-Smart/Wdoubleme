@@ -2,9 +2,11 @@
  * LocalAuth
  *
  * Uses real Supabase auth/session data when configured.
- * Local storage only persists authenticated profile state for the active user.
+ * Local storage persists authenticated profile state for the active user and
+ * supports explicit demo-mode sessions for verification environments.
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { authAPI } from '../services/auth';
 import { initSupabaseListeners, isSupabaseConfigured, supabase } from '../utils/supabase/client';
 import { getConfig } from '../utils/env';
@@ -28,8 +30,10 @@ export interface WaselUser {
   phoneVerified: boolean;
   twoFactorEnabled: boolean;
   trustScore: number;
-  backendMode: 'supabase';
+  backendMode: 'supabase' | 'demo';
 }
+
+type SignInResult = Awaited<ReturnType<typeof authAPI.signIn>>;
 
 function computeTrustScore(user: Pick<WaselUser, 'verified' | 'sanadVerified' | 'emailVerified' | 'phoneVerified' | 'trips' | 'rating'>) {
   let score = 45;
@@ -39,6 +43,90 @@ function computeTrustScore(user: Pick<WaselUser, 'verified' | 'sanadVerified' | 
   score += Math.min(user.trips, 50) * 0.4;
   score += Math.max(0, Math.min(user.rating, 5)) * 2;
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function normalizeRole(value: unknown): WaselUser['role'] {
+  return value === 'driver' || value === 'both' ? value : 'rider';
+}
+
+function normalizeWalletStatus(value: unknown): WaselUser['walletStatus'] {
+  return value === 'limited' || value === 'frozen' ? value : 'active';
+}
+
+function normalizeVerificationLevel(value: unknown, phoneVerified: boolean, sanadVerified: boolean): string {
+  if (value === 'level_0' || value === 'level_1' || value === 'level_2' || value === 'level_3') {
+    return value;
+  }
+
+  if (sanadVerified) return 'level_3';
+  if (phoneVerified) return 'level_1';
+  return 'level_0';
+}
+
+function normalizeStoredUser(raw: unknown): WaselUser | null {
+  if (!raw || typeof raw !== 'object') {
+    return null;
+  }
+
+  const value = raw as Record<string, unknown>;
+  const id = typeof value.id === 'string' ? value.id.trim() : '';
+  const email = typeof value.email === 'string' ? value.email.trim() : '';
+
+  if (!id || !email) {
+    return null;
+  }
+
+  const name =
+    typeof value.name === 'string' && value.name.trim()
+      ? value.name.trim()
+      : email.split('@')[0] || 'Wasel User';
+  const phone =
+    typeof value.phone === 'string' && value.phone.trim()
+      ? value.phone.trim()
+      : undefined;
+  const rating = Number.isFinite(Number(value.rating))
+    ? Math.max(0, Math.min(Number(value.rating), 5))
+    : 5;
+  const trips = Number.isFinite(Number(value.trips))
+    ? Math.max(0, Math.floor(Number(value.trips)))
+    : 0;
+  const verified = Boolean(value.verified ?? value.sanadVerified);
+  const sanadVerified = Boolean(value.sanadVerified ?? verified);
+  const emailVerified = Boolean(value.emailVerified ?? email);
+  const phoneVerified = Boolean(value.phoneVerified ?? phone);
+
+  const normalized: WaselUser = {
+    id,
+    name,
+    email,
+    phone,
+    role: normalizeRole(value.role),
+    balance: Number.isFinite(Number(value.balance)) ? Number(value.balance) : 0,
+    rating,
+    trips,
+    verified,
+    sanadVerified,
+    verificationLevel: normalizeVerificationLevel(value.verificationLevel, phoneVerified, sanadVerified),
+    walletStatus: normalizeWalletStatus(value.walletStatus),
+    avatar:
+      typeof value.avatar === 'string' && value.avatar.trim()
+        ? value.avatar.trim()
+        : undefined,
+    joinedAt:
+      typeof value.joinedAt === 'string' && value.joinedAt.trim()
+        ? value.joinedAt.slice(0, 10)
+        : new Date().toISOString().slice(0, 10),
+    emailVerified,
+    phoneVerified,
+    twoFactorEnabled: Boolean(value.twoFactorEnabled),
+    trustScore: 0,
+    backendMode: value.backendMode === 'demo' ? 'demo' : 'supabase',
+  };
+
+  return {
+    ...normalized,
+    trustScore: computeTrustScore(normalized),
+  };
 }
 
 function mapBackendProfile({
@@ -116,8 +204,8 @@ function loadUser(): WaselUser | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as WaselUser;
-    if (parsed.backendMode !== 'supabase') {
+    const parsed = normalizeStoredUser(JSON.parse(raw));
+    if (!parsed) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }
@@ -152,6 +240,8 @@ function toMessage(error: unknown): string {
 export function LocalAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<WaselUser | null>(loadUser);
   const [loading, setLoading] = useState(true);
+  const { enableDemoAccount } = getConfig();
+
   useEffect(() => {
     const cleanup = initSupabaseListeners();
     return cleanup;
@@ -159,6 +249,13 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    const getPersistedDemoUser = () => {
+      const storedUser = loadUser();
+      if (!enableDemoAccount || storedUser?.backendMode !== 'demo') {
+        return null;
+      }
+      return storedUser;
+    };
 
     const setAndPersist = (next: WaselUser | null) => {
       if (!mounted) return;
@@ -177,7 +274,7 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
 
         if (!data.session?.user) {
-          setAndPersist(null);
+          setAndPersist(getPersistedDemoUser());
           setLoading(false);
           return;
         }
@@ -189,6 +286,10 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
         });
         setAndPersist(mapped);
       } catch {
+        const demoUser = getPersistedDemoUser();
+        if (demoUser) {
+          setAndPersist(demoUser);
+        }
         // Keep any previously stored user if backend sync fails.
       } finally {
         if (mounted) setLoading(false);
@@ -198,11 +299,11 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
     hydrateFromSession();
 
     if (isSupabaseConfigured && supabase) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
         if (!mounted) return;
 
         if (!session?.user) {
-          setAndPersist(null);
+          setAndPersist(getPersistedDemoUser());
           return;
         }
 
@@ -228,7 +329,7 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [enableDemoAccount]);
 
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
     setLoading(true);
@@ -236,7 +337,7 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
     try {
       if (isSupabaseConfigured && supabase) {
         const data = await authAPI.signIn(email, password);
-        const authUser = (data as any)?.user ?? (data as any)?.session?.user ?? null;
+        const authUser = (data as SignInResult).user ?? (data as SignInResult).session?.user ?? null;
 
         if (authUser) {
           const profileResult = await authAPI.getProfile().catch(() => ({ profile: null }));

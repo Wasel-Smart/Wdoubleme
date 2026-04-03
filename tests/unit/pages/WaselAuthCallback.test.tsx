@@ -3,6 +3,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const mockNavigate = vi.fn();
 const mockGetSession = vi.fn();
+const mockInitialize = vi.fn();
+const mockOnAuthStateChange = vi.fn();
 
 vi.mock('@/hooks/useIframeSafeNavigate', () => ({
   useIframeSafeNavigate: () => mockNavigate,
@@ -12,6 +14,8 @@ vi.mock('@/utils/supabase/client', () => ({
   supabase: {
     auth: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
+      initialize: (...args: unknown[]) => mockInitialize(...args),
+      onAuthStateChange: (...args: unknown[]) => mockOnAuthStateChange(...args),
     },
   },
 }));
@@ -21,6 +25,14 @@ import WaselAuthCallback from '@/pages/WaselAuthCallback';
 describe('WaselAuthCallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockInitialize.mockResolvedValue({ error: null });
+    mockOnAuthStateChange.mockReturnValue({
+      data: {
+        subscription: {
+          unsubscribe: vi.fn(),
+        },
+      },
+    });
     mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'u1' } } }, error: null });
   });
 
@@ -28,7 +40,7 @@ describe('WaselAuthCallback', () => {
     render(<WaselAuthCallback />);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/find-ride', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/app/find-ride', { replace: true });
     });
 
     expect(screen.getByText(/Finalizing authentication/i)).toBeInTheDocument();

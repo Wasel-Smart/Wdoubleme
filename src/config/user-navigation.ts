@@ -6,6 +6,7 @@ export interface CoreNavItem {
   description: string;
   descriptionAr: string;
   accent: 'cyan' | 'gold';
+  requiresAuth?: boolean;
 }
 
 export const CORE_NAV_ITEMS: CoreNavItem[] = [
@@ -19,30 +20,32 @@ export const CORE_NAV_ITEMS: CoreNavItem[] = [
     accent: 'cyan',
   },
   {
-    id: 'post',
-    label: 'Supply',
-    labelAr: 'Supply',
-    path: '/offer-ride',
-    description: 'Publish route capacity for people and goods',
-    descriptionAr: 'Publish route capacity for people and goods',
+    id: 'movement',
+    label: 'Network',
+    labelAr: 'Network',
+    path: '/mobility-os',
+    description: 'See the live network, busiest lanes, and calm windows',
+    descriptionAr: 'See the live network, busiest lanes, and calm windows',
     accent: 'gold',
   },
   {
-    id: 'packages',
-    label: 'Goods',
-    labelAr: 'Goods',
-    path: '/packages',
-    description: 'Move parcels and returns on the same route graph',
-    descriptionAr: 'Move parcels and returns on the same route graph',
-    accent: 'gold',
-  },
-  {
-    id: 'bus',
-    label: 'Fixed',
-    labelAr: 'Fixed',
-    path: '/bus',
-    description: 'Open scheduled corridor departures',
-    descriptionAr: 'Open scheduled corridor departures',
+    id: 'trips',
+    label: 'Trips',
+    labelAr: 'Trips',
+    path: '/my-trips',
+    description: 'Track your booked movement and active trips',
+    descriptionAr: 'Track your booked movement and active trips',
     accent: 'cyan',
+    requiresAuth: true,
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    labelAr: 'Profile',
+    path: '/profile',
+    description: 'Manage your trust, identity, and movement profile',
+    descriptionAr: 'Manage your trust, identity, and movement profile',
+    accent: 'gold',
+    requiresAuth: true,
   },
 ];

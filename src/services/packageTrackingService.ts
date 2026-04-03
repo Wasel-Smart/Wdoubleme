@@ -397,8 +397,8 @@ export class PackageTrackingService {
   }
 
   private isNearDestination(
-    currentLocation: { lat: number; lng: number },
-    destination: string
+    _currentLocation: { lat: number; lng: number },
+    _destination: string
   ): boolean {
     // Simple distance check (would use actual coordinates in production)
     // For now, return false (would need geocoding)

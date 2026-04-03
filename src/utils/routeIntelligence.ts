@@ -215,7 +215,7 @@ export function scoreTripForPassenger(
   const timeScore = scoreTimeMatch(trip.departureTime, request.date);
 
   // ── Weighted overall score ──────────────────────────────────────────────────
-  const overall = Math.round(
+  let overall = Math.round(
     routeMatch      * WEIGHTS.routeMatch +
     seatScore       * WEIGHTS.seatAvailability +
     priceScore      * WEIGHTS.priceMatch +
@@ -224,6 +224,16 @@ export function scoreTripForPassenger(
     pkgScore        * WEIGHTS.packageFit +
     timeScore       * WEIGHTS.timeFlexibility,
   );
+
+  if (routeMatch < 60) {
+    overall = Math.min(overall, 55);
+  }
+  if (seatScore === 0) {
+    overall = Math.min(overall, 45);
+  }
+  if (genderScore === 0) {
+    overall = Math.min(overall, 40);
+  }
 
   // ── Post-booking seat utilization ───────────────────────────────────────────
   const seatsAfterBooking = trip.availableSeats - request.passengersCount;
@@ -328,7 +338,7 @@ export function optimizeMultiStopRoute(
   origin: string,
   destination: string,
   waypoints: string[],
-  departureTimeISO: string,
+  _departureTimeISO: string,
   distanceMatrix: Record<string, Record<string, number>>, // city → city → km
 ): RouteOptimizationResult {
   if (waypoints.length === 0) {
@@ -427,7 +437,7 @@ export function calculateLiquidityHealth(
   const availableTrips = availableTripsOrMetrics;
   const safeTotalSeats = totalSeats ?? 0;
   const safeBookedSeats = bookedSeats ?? 0;
-  const utilizationRate = totalSeats > 0 ? bookedSeats / totalSeats : 0;
+  const utilizationRate = safeTotalSeats > 0 ? safeBookedSeats / safeTotalSeats : 0;
   let healthScore: number;
   let status: LiquidityMetrics['status'];
 
@@ -509,7 +519,7 @@ export interface PrayerStop {
 export function calculatePrayerStops(
   departureISO: string,
   totalDurationMin: number,
-  country: CountryCode,
+  _country: CountryCode,
 ): PrayerStop[] {
   const stops: PrayerStop[] = [];
   const dep = new Date(departureISO).getTime();

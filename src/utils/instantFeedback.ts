@@ -16,7 +16,6 @@ interface FeedbackOptions {
 class InstantFeedbackEngine {
   private supportsHaptics: boolean = false;
   private audioContext: AudioContext | null = null;
-  private feedbackCache: Map<string, HTMLElement> = new Map();
   private initialized = false;
 
   constructor() {
@@ -182,7 +181,6 @@ class InstantFeedbackEngine {
       haptic = true,
       visual = true,
       audio = false,
-      duration = 100
     } = options;
 
     // All feedback runs in parallel for <50ms total time
@@ -215,11 +213,16 @@ class InstantFeedbackEngine {
    * Touch-optimized event handler
    * Provides instant feedback on touch
    */
-  attachTouchFeedback(element: HTMLElement, type: FeedbackType = 'light'): () => void {
+  attachTouchFeedback(element: HTMLElement, type: FeedbackType = 'light', options: FeedbackOptions = {}): () => void {
     const handleTouchStart = (e: TouchEvent) => {
       // Provide immediate feedback
       const touch = e.touches[0];
-      this.haptic(type);
+      if (options.haptic !== false) {
+        this.haptic(type);
+      }
+      if (options.audio) {
+        this.playTone(440, 30);
+      }
       this.ripple(element, { x: touch.clientX, y: touch.clientY });
     };
 
@@ -245,8 +248,14 @@ class InstantFeedbackEngine {
    * Mouse-optimized event handler
    * Provides instant feedback on click
    */
-  attachClickFeedback(element: HTMLElement, type: FeedbackType = 'light'): () => void {
+  attachClickFeedback(element: HTMLElement, type: FeedbackType = 'light', options: FeedbackOptions = {}): () => void {
     const handleMouseDown = (e: MouseEvent) => {
+      if (options.haptic !== false) {
+        this.haptic(type);
+      }
+      if (options.audio) {
+        this.playTone(440, 30);
+      }
       this.ripple(element, { x: e.clientX, y: e.clientY });
       this.scalePress(element);
     };
@@ -283,8 +292,8 @@ export function useInstantFeedback(type: FeedbackType = 'light', options: Feedba
     if (!element) return;
 
     // Attach both touch and click feedback
-    const cleanupTouch = instantFeedback.attachTouchFeedback(element, type);
-    const cleanupClick = instantFeedback.attachClickFeedback(element, type);
+    const cleanupTouch = instantFeedback.attachTouchFeedback(element, type, options);
+    const cleanupClick = instantFeedback.attachClickFeedback(element, type, options);
 
     return () => {
       cleanupTouch();

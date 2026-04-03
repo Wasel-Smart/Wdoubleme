@@ -45,12 +45,6 @@ type PaymentMethodRow = {
   updated_at?: string | null;
 };
 
-type UserRow = {
-  id: string;
-  auth_user_id?: string | null;
-  verification_level?: string | null;
-};
-
 export interface WalletSummary {
   id: string | null;
   userId: string | null;

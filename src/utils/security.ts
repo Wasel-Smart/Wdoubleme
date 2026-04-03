@@ -146,7 +146,7 @@ export function checkPasswordStrength(password: string): PasswordStrength {
   const commonPatterns = [/^123456/, /password/i, /qwerty/i, /admin/i, /letmein/i];
   if (commonPatterns.some((pattern) => pattern.test(password))) {
     feedback.push('Avoid common patterns');
-    score = Math.max(0, score - 1);
+    score = Math.max(0, score - 2);
   }
   if (/(.)\1{2,}/.test(password)) {
     feedback.push('Avoid repeating characters');
@@ -274,8 +274,8 @@ export function validatePhone(phone: string): boolean {
 
 export function validateURL(url: string): boolean {
   try {
-    new URL(url);
-    return true;
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
   } catch {
     return false;
   }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { AuthChangeEvent } from '@supabase/supabase-js';
 import { useIframeSafeNavigate } from '../hooks/useIframeSafeNavigate';
 import { supabase } from '../utils/supabase/client';
 
@@ -54,23 +55,36 @@ export default function WaselAuthCallback() {
         return;
       }
 
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((event) => {
-        if (!active) return;
+      const authChange =
+        typeof supabase.auth.onAuthStateChange === 'function'
+          ? supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
+              if (!active) return;
 
-        if (event === 'PASSWORD_RECOVERY') {
-          isRecoveryFlow = true;
-          setState('recovery');
-          setMessage('Set a new password to finish recovering your account.');
-          setFormError('');
-        }
-      });
+              if (event === 'PASSWORD_RECOVERY') {
+                isRecoveryFlow = true;
+                setState('recovery');
+                setMessage('Set a new password to finish recovering your account.');
+                setFormError('');
+              }
+            })
+          : {
+              data: {
+                subscription: {
+                  unsubscribe() {
+                    return undefined;
+                  },
+                },
+              },
+            };
+
+      const { data: { subscription } } = authChange;
 
       try {
-        const { error: initializeError } = await supabase.auth.initialize();
-        if (initializeError) {
-          throw initializeError;
+        if (typeof supabase.auth.initialize === 'function') {
+          const { error: initializeError } = await supabase.auth.initialize();
+          if (initializeError) {
+            throw initializeError;
+          }
         }
 
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -165,7 +179,7 @@ export default function WaselAuthCallback() {
           background: '#040C18',
           color: '#EFF6FF',
           padding: 24,
-          fontFamily: "-apple-system,'Inter',sans-serif",
+              fontFamily: "var(--wasel-font-sans, 'Plus Jakarta Sans', 'Cairo', 'Tajawal', sans-serif)",
         }}
       >
         <div
@@ -295,7 +309,7 @@ export default function WaselAuthCallback() {
         background: '#040C18',
         color: '#EFF6FF',
         padding: 24,
-        fontFamily: "-apple-system,'Inter',sans-serif",
+                  fontFamily: "var(--wasel-font-sans, 'Plus Jakarta Sans', 'Cairo', 'Tajawal', sans-serif)",
       }}
     >
       <div

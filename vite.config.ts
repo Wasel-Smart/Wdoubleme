@@ -25,7 +25,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) return;
+          if (!id.includes('node_modules')) return undefined;
 
           // React core — must be its own chunk for maximum cache hits
           if (
@@ -71,6 +71,8 @@ export default defineConfig({
 
           // Payments
           if (id.includes('/node_modules/@stripe/')) return 'payments';
+
+          return undefined;
         },
       },
     },

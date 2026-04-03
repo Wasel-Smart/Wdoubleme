@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import { authAPI } from '../services/auth';
 import { supabase, isSupabaseConfigured } from '../utils/supabase/client';
 import { getAuthCallbackUrl } from '../utils/env';
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     let mounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, nextSession) => {
+      async (event: AuthChangeEvent, nextSession: Session | null) => {
         if (!mounted) return;
 
         setSession(nextSession);

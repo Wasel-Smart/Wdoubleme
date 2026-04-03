@@ -107,14 +107,17 @@ export function sanitizeFilename(filename: string): string {
   const base = dot > 0 ? safe.slice(0, dot) : safe;
   const ext = dot > 0 ? safe.slice(dot) : '';
 
-  // Collapse dot-runs only when they are between alphanumerics (e.g. "file..name").
-  const normalizedBase = base.replace(/([A-Za-z0-9])\.{2,}([A-Za-z0-9])/g, '$1.$2');
+  // Remove traversal-style dot runs while preserving a single extension separator.
+  const normalizedBase = base.replace(/\.{2,}/g, '_');
 
   // Tests expect that when the original filename had invalid characters and an extension,
   // we pad with two underscores before the extension (even if the base already ends with _).
   const paddedBase = ext && hadInvalid ? `${normalizedBase}__` : normalizedBase;
 
-  return `${paddedBase}${ext}`.substring(0, 255);
+  return `${paddedBase}${ext}`
+    // Final guard: never allow traversal-style dot runs to survive reconstruction.
+    .replace(/\.{2,}/g, '_')
+    .substring(0, 255);
 }
 
 /**

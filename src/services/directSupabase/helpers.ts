@@ -4,7 +4,6 @@ import { supabase } from '../../utils/supabase/client';
 import { evaluateTrustCapability } from '../trustRules';
 import type {
   DbClient,
-  DriverRow,
   RawBooking,
   RawProfile,
   TripRow,

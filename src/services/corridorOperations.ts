@@ -124,7 +124,7 @@ function buildTripCandidates(route: CityRoute, seatsPerTrip: number): TripSummar
   }));
 }
 
-function buildDefaultBusinessEmployees(route: CityRoute, seatPrice: number): BusinessEmployee[] {
+function buildDefaultBusinessEmployees(_route: CityRoute, seatPrice: number): BusinessEmployee[] {
   return [
     {
       id: generateId('emp'),
