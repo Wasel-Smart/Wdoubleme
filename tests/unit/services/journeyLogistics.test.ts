@@ -209,7 +209,7 @@ describe('journeyLogistics', () => {
         weight: '1 kg',
         note: 'Same city test',
       }),
-    ).rejects.toThrow('Sender and receiver cities must be different.');
+    ).rejects.toThrow('Sender and receiver locations must be different.');
   });
 
   it('attempts to persist packages remotely when auth is available even without recipient details', async () => {

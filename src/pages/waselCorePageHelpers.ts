@@ -1,4 +1,8 @@
-import { CITIES, type Ride } from './waselCoreRideData';
+import { type Ride } from './waselCoreRideData';
+import {
+  isKnownJordanLocation,
+  routeEndpointsAreDistinct,
+} from '../utils/jordanLocations';
 
 export interface FindRideCopy {
   from: string;
@@ -84,8 +88,8 @@ export interface PackageComposer {
 export function parseFindRideParams(search: string) {
   const corridorParams = new URLSearchParams(search);
   return {
-    initialFrom: CITIES.includes(corridorParams.get('from') ?? '') ? corridorParams.get('from')! : 'Amman',
-    initialTo: CITIES.includes(corridorParams.get('to') ?? '') ? corridorParams.get('to')! : 'Aqaba',
+    initialFrom: isKnownJordanLocation(corridorParams.get('from')) ? corridorParams.get('from')! : 'Amman',
+    initialTo: isKnownJordanLocation(corridorParams.get('to')) ? corridorParams.get('to')! : 'Aqaba',
     initialDate: corridorParams.get('date') ?? '',
     initialSearched: corridorParams.get('search') === '1',
   };
@@ -167,7 +171,7 @@ export function createOfferRideDefaultForm(): OfferRideForm {
 
 export function validateOfferRideStep(form: OfferRideForm, targetStep: number) {
   if (targetStep >= 1) {
-    if (form.from === form.to) return 'Origin and destination need to be different.';
+    if (!routeEndpointsAreDistinct(form.from, form.to)) return 'Origin and destination need to be different locations.';
     if (!form.date) return 'Choose a departure date.';
     if (!form.time) return 'Choose a departure time.';
   }
@@ -196,7 +200,7 @@ export function createPackageComposer(): PackageComposer {
 }
 
 export function validatePackageComposer(pkg: PackageComposer) {
-  if (pkg.from === pkg.to) return 'Pickup and destination need to be different cities.';
+  if (!routeEndpointsAreDistinct(pkg.from, pkg.to)) return 'Pickup and destination need to be different locations.';
   if (!pkg.recipientName.trim()) return 'Add the recipient name so the captain knows who will receive it.';
   if (pkg.recipientPhone.replace(/[^\d]/g, '').length < 9) return 'Add a valid recipient phone number.';
   return null;

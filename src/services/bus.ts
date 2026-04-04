@@ -2,6 +2,10 @@ import { bookingsAPI } from './bookings';
 import { trackGrowthEvent } from './growthEngine';
 import { tripsAPI } from './trips';
 import { OFFICIAL_JORDAN_BUS_ROUTES } from '../data/jordanBusNetwork';
+import {
+  locationsOverlap,
+  routeMatchesLocationPair,
+} from '../utils/jordanLocations';
 
 export interface BusRoute {
   id: string;
@@ -140,8 +144,8 @@ export function normalizeBusRoute(raw: Record<string, unknown>, index: number): 
 }
 
 function matchOfficialRoute(route: BusRoute, query: BusRouteQuery): boolean {
-  if (query.from && route.from !== query.from) return false;
-  if (query.to && route.to !== query.to) return false;
+  if (query.from && !locationsOverlap(route.from, query.from)) return false;
+  if (query.to && !locationsOverlap(route.to, query.to)) return false;
   if (query.seats && route.seats < query.seats) return false;
   return true;
 }
@@ -153,7 +157,11 @@ export function getOfficialBusRoutes(query: BusRouteQuery = {}): BusRoute[] {
   if (query.from || query.to) {
     const close = OFFICIAL_JORDAN_BUS_ROUTES.filter((route) => {
       if (query.seats && route.seats < query.seats) return false;
-      return route.from === query.from || route.to === query.to || route.to === query.from || route.from === query.to;
+      return routeMatchesLocationPair(route.from, route.to, query.from, query.to)
+        || locationsOverlap(route.from, query.from)
+        || locationsOverlap(route.to, query.to)
+        || locationsOverlap(route.to, query.from)
+        || locationsOverlap(route.from, query.to);
     });
     if (close.length > 0) return close;
   }

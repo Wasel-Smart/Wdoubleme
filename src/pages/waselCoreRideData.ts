@@ -1,4 +1,5 @@
 import type { PostedRide } from '../services/journeyLogistics';
+import { JORDAN_LOCATION_OPTIONS } from '../utils/jordanLocations';
 
 export interface Ride {
   id: string;
@@ -190,7 +191,8 @@ export const ALL_RIDES: Ride[] = [
   },
 ];
 
-export const CITIES = ['Amman', 'Aqaba', 'Irbid', 'Zarqa', 'Dead Sea', 'Karak', 'Madaba', 'Petra', 'Jerash', 'Mafraq', 'Salt'];
+export const LOCATION_OPTIONS = JORDAN_LOCATION_OPTIONS;
+export const CITIES = LOCATION_OPTIONS;
 
 export const RIDE_BOOKINGS_KEY = 'wasel-find-ride-bookings';
 export const RIDE_SEARCHES_KEY = 'wasel-find-ride-searches';

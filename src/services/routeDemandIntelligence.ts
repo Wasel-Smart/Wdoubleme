@@ -10,6 +10,7 @@ import { getConnectedPackages, getConnectedRides } from './journeyLogistics';
 import { getMovementMembershipSnapshot } from './movementMembership';
 import { getMovementPriceQuote, type MovementPriceQuote } from './movementPricing';
 import { getRideBookings } from './rideLifecycle';
+import { routeMatchesLocationPair } from '../utils/jordanLocations';
 
 const REFRESH_MS = 15_000;
 const DAY_MS = 86_400_000;
@@ -54,20 +55,8 @@ function roundMoney(value: number) {
   return Math.round(value * 10) / 10;
 }
 
-function normalizeCity(value: string) {
-  return value.trim().toLowerCase();
-}
-
 function corridorMatches(corridor: CorridorOpportunity, from?: string | null, to?: string | null) {
-  if (!from || !to) return false;
-  const leftFrom = normalizeCity(from);
-  const leftTo = normalizeCity(to);
-  const rightFrom = normalizeCity(corridor.from);
-  const rightTo = normalizeCity(corridor.to);
-  return (
-    (leftFrom === rightFrom && leftTo === rightTo) ||
-    (leftFrom === rightTo && leftTo === rightFrom)
-  );
+  return routeMatchesLocationPair(corridor.from, corridor.to, from, to);
 }
 
 function recencyWeight(timestamp: string, now = Date.now()) {

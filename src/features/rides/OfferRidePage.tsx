@@ -29,6 +29,7 @@ import {
 import { ServiceFlowPlaybook } from '../shared/ServiceFlowPlaybook';
 import { OfferRideFormPanel } from './components/OfferRideFormPanel';
 import { OfferRideIncomingRequests } from './components/OfferRideIncomingRequests';
+import { routeMatchesLocationPair } from '../../utils/jordanLocations';
 
 const GENDER_META = createGenderMeta(DS);
 
@@ -57,8 +58,8 @@ export function OfferRidePage() {
   );
   const routeIntelligence = useLiveRouteIntelligence({ from: form.from, to: form.to });
   const selectedSignal = routeIntelligence.selectedSignal;
-  const corridorCount = getConnectedRides().filter((ride) => ride.from === form.from && ride.to === form.to).length;
-  const recentPostedRides = getConnectedRides().filter((ride) => ride.from === form.from && ride.to === form.to).slice(0, 3);
+  const corridorCount = getConnectedRides().filter((ride) => routeMatchesLocationPair(ride.from, ride.to, form.from, form.to, { allowReverse: false })).length;
+  const recentPostedRides = getConnectedRides().filter((ride) => routeMatchesLocationPair(ride.from, ride.to, form.from, form.to, { allowReverse: false })).slice(0, 3);
   const incomingRequests = user
     ? getBookingsForDriver(user.id, getConnectedRides()).filter((booking) => booking.status === 'pending_driver').slice(0, 4)
     : [];

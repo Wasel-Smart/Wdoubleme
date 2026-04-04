@@ -1,3 +1,8 @@
+import {
+  locationsOverlap,
+  resolveRepresentativeCity,
+} from '../utils/jordanLocations';
+
 /**
  * Jordan Mobility Network - 12 Core Routes
  * Pre-configured routes with coordinates, distances, and pricing.
@@ -221,19 +226,19 @@ export function getRoute(routeId: string): JordanRoute | undefined {
 
 export function getRoutesFrom(city: string): JordanRoute[] {
   return JORDAN_MOBILITY_NETWORK.filter(
-    (route) => route.origin.toLowerCase() === city.toLowerCase(),
+    (route) => locationsOverlap(route.origin, city),
   );
 }
 
 export function getRoutesTo(city: string): JordanRoute[] {
   return JORDAN_MOBILITY_NETWORK.filter(
-    (route) => route.destination.toLowerCase() === city.toLowerCase(),
+    (route) => locationsOverlap(route.destination, city),
   );
 }
 
 export function getRouteBetween(city1: string, city2: string): JordanRoute | undefined {
-  const c1 = city1.toLowerCase();
-  const c2 = city2.toLowerCase();
+  const c1 = resolveRepresentativeCity(city1).toLowerCase();
+  const c2 = resolveRepresentativeCity(city2).toLowerCase();
 
   return JORDAN_MOBILITY_NETWORK.find(
     (route) =>

@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('find ride books a seat', async ({ page }) => {
-  await page.goto('/app/find-ride');
+  await page.goto('/app/find-ride', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /find a shared route/i })).toBeVisible();
   await page.getByTestId('find-ride-search').click();
   await page.getByRole('button', { name: /book seat/i }).first().click();
@@ -34,7 +34,7 @@ test('bus flow reserves a seat', async ({ page }) => {
 
 test('packages flow creates tracking', async ({ page }) => {
   await page.goto('/app/packages');
-  await expect(page.getByRole('heading', { name: /^packages$/i })).toBeVisible();
+  await expect(page.getByTestId('package-recipient-name')).toBeVisible();
   await page.getByTestId('package-recipient-name').fill('Receiver Test');
   await page.getByTestId('package-recipient-phone').fill('+962790000888');
   await page.getByTestId('package-create-request').click();

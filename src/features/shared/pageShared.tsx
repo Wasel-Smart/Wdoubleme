@@ -18,6 +18,10 @@ import {
   WaselProofOfLifeBlock,
 } from '../../components/system/WaselPresence';
 import { PAGE_DS } from '../../styles/wasel-page-theme';
+import {
+  JORDAN_LOCATION_OPTIONS,
+  resolveJordanLocationCoord,
+} from '../../utils/jordanLocations';
 
 // ── Design-system shorthand ───────────────────────────────────────────────────
 export const DS = PAGE_DS;
@@ -38,30 +42,10 @@ export const pill = (color: string) => ({
 });
 
 // ── Jordan city coordinates ───────────────────────────────────────────────────
-export const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  Amman:      { lat: 31.9539, lng: 35.9106 },
-  Aqaba:      { lat: 29.5321, lng: 35.0060 },
-  Irbid:      { lat: 32.5568, lng: 35.8479 },
-  Zarqa:      { lat: 32.0728, lng: 36.0880 },
-  'Dead Sea': { lat: 31.5590, lng: 35.4732 },
-  Karak:      { lat: 31.1854, lng: 35.7048 },
-  Madaba:     { lat: 31.7196, lng: 35.7939 },
-  Petra:      { lat: 30.3285, lng: 35.4444 },
-  Jerash:     { lat: 32.2744, lng: 35.8961 },
-  Mafraq:     { lat: 32.3429, lng: 36.2080 },
-  Salt:       { lat: 32.0392, lng: 35.7272 },
-  'Wadi Rum': { lat: 29.5734, lng: 35.4196 },
-  Ajloun:     { lat: 32.3333, lng: 35.7528 },
-  "Ma'in":    { lat: 31.6796, lng: 35.6217 },
-};
-
-export const CITIES = [
-  'Amman','Aqaba','Irbid','Zarqa','Dead Sea',
-  'Karak','Madaba','Petra','Jerash','Mafraq','Salt','Wadi Rum','Ajloun',"Ma'in",
-];
+export const CITIES = JORDAN_LOCATION_OPTIONS;
 
 export function resolveCityCoord(city: string) {
-  return CITY_COORDS[city] ?? CITY_COORDS.Amman;
+  return resolveJordanLocationCoord(city);
 }
 
 export function midpoint(

@@ -1,5 +1,10 @@
 import { createDirectDemandAlert, getDirectDemandAlerts } from './directSupabase';
 import { trackGrowthEvent } from './growthEngine';
+import {
+  buildJordanCorridorKey,
+  normalizeJordanLocation,
+  routeMatchesLocationPair,
+} from '../utils/jordanLocations';
 
 export type DemandService = 'ride' | 'bus' | 'package';
 export type DemandStatus = 'active' | 'matched' | 'expired';
@@ -43,6 +48,23 @@ function syncAlerts(alerts: DemandAlert[]) {
 function updateLocalAlert(id: string, updates: Partial<DemandAlert>) {
   const next = readAlerts().map((alert) => (alert.id === id ? { ...alert, ...updates } : alert));
   syncAlerts(next);
+}
+
+function normalizeAlertInput(input: {
+  from: string;
+  to: string;
+  date: string;
+  service: DemandService;
+  seatsOrSlots?: number;
+}) {
+  return {
+    from: normalizeJordanLocation(input.from, input.from || 'Amman'),
+    to: normalizeJordanLocation(input.to, input.to || 'Aqaba'),
+    date: input.date,
+    service: input.service,
+    seatsOrSlots: Math.max(1, input.seatsOrSlots ?? 1),
+    corridorKey: buildJordanCorridorKey(input.from, input.to),
+  };
 }
 
 export async function hydrateDemandAlerts(userId?: string): Promise<DemandAlert[]> {
@@ -96,24 +118,24 @@ export function createDemandAlert(input: {
   seatsOrSlots?: number;
   userId?: string;
 }): DemandAlert {
+  const normalized = normalizeAlertInput(input);
   const alerts = readAlerts();
   const existing = alerts.find(
     (item) =>
-      item.from === input.from &&
-      item.to === input.to &&
-      item.date === input.date &&
-      item.service === input.service &&
+      routeMatchesLocationPair(item.from, item.to, normalized.from, normalized.to, { allowReverse: false }) &&
+      item.date === normalized.date &&
+      item.service === normalized.service &&
       item.status === 'active',
   );
   if (existing) return existing;
 
   const alert: DemandAlert = {
     id: `demand-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    from: input.from,
-    to: input.to,
-    date: input.date,
-    service: input.service,
-    seatsOrSlots: Math.max(1, input.seatsOrSlots ?? 1),
+    from: normalized.from,
+    to: normalized.to,
+    date: normalized.date,
+    service: normalized.service,
+    seatsOrSlots: normalized.seatsOrSlots,
     status: 'active',
     createdAt: new Date().toISOString(),
   };
@@ -138,12 +160,13 @@ export function createDemandAlert(input: {
     userId: input.userId,
     eventName: 'demand_alert_created',
     funnelStage: 'searched',
-    serviceType: input.service,
+    serviceType: normalized.service,
     from: alert.from,
     to: alert.to,
     metadata: {
       date: alert.date,
       seatsOrSlots: alert.seatsOrSlots,
+      corridorKey: normalized.corridorKey,
     },
   });
   return alert;

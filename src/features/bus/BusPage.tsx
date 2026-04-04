@@ -21,6 +21,10 @@ import { createBusBooking, fetchBusRoutes, getOfficialBusRoutes, type BusRoute }
 import { createSupportTicket } from '../../services/supportInbox';
 import { notificationsAPI } from '../../services/notifications.js';
 import {
+  routeEndpointsAreDistinct,
+  routeMatchesLocationPair,
+} from '../../utils/jordanLocations';
+import {
   CITIES,
   CoreExperienceBanner,
   DS,
@@ -49,7 +53,7 @@ function getTodayIsoDate() {
 }
 
 function isExactRoute(route: BusRoute, from: string, to: string) {
-  return route.from === from && route.to === to;
+  return routeMatchesLocationPair(route.from, route.to, from, to, { allowReverse: false });
 }
 
 function getScheduleTimes(route: BusRoute) {
@@ -112,10 +116,10 @@ export function BusPage() {
     let cancelled = false;
     async function loadBusRoutes() {
       const fallbackRoutes = getOfficialBusRoutes({ from: origin, to: destination, seats: passengers });
-      if (origin === destination) {
+      if (!routeEndpointsAreDistinct(origin, destination)) {
         setBusRoutes(fallbackRoutes);
         setSelected(fallbackRoutes[0]?.id ?? '');
-        setRoutesInfo('Choose two different cities to preview the right coach corridor.');
+        setRoutesInfo('Choose two different locations to preview the right coach corridor.');
         setRoutesLoading(false);
         return;
       }
@@ -160,7 +164,7 @@ export function BusPage() {
   const totalOpenSeats = busRoutes.reduce((sum, route) => sum + route.seats, 0);
   const exactRouteCount = busRoutes.filter((route) => isExactRoute(route, origin, destination)).length;
   const operatorCount = new Set(busRoutes.map((route) => route.company)).size;
-  const bookingDisabled = bookingBusy || routesLoading || origin === destination || activeBus.seats === 0 || passengers > activeBus.seats;
+  const bookingDisabled = bookingBusy || routesLoading || !routeEndpointsAreDistinct(origin, destination) || activeBus.seats === 0 || passengers > activeBus.seats;
   const departureTimes = getScheduleTimes(activeBus);
   const departureKey = departureTimes.join('|');
   const departureLabel = scheduleMode === 'depart-now' ? `Next departure today at ${selectedDeparture}` : `${tripDate} at ${selectedDeparture}`;

@@ -4,6 +4,7 @@ import {
   type JordanRoute,
 } from './jordan-mobility-network';
 import { SmartPricingEngine, type SeatPricingModel } from '../utils/pricing/SeatPricing';
+import { buildJordanCorridorKey } from '../utils/jordanLocations';
 
 export type MovementLayerId = 'people' | 'goods' | 'services' | 'data';
 export type DensityLabel = 'surging' | 'high-frequency' | 'steady' | 'expanding';
@@ -387,7 +388,7 @@ function normalizeRoute(route: JordanRoute, from?: string, to?: string) {
 }
 
 function getCorridorMeta(routeId: string): CorridorMeta {
-  return CORRIDOR_META[routeId] ?? {
+  return CORRIDOR_META[routeId] ?? CORRIDOR_META[routeId.toLowerCase()] ?? {
     demandScore: 70,
     density: 'steady',
     pickupPoints: ['Main corridor node', 'Trusted pickup zone', 'Demand capture point'],
@@ -493,6 +494,7 @@ export function getCorridorOpportunityById(routeId: string) {
 
 export function getCorridorOpportunity(from: string, to: string) {
   const route = getRouteBetween(from, to)
+    ?? JORDAN_MOBILITY_NETWORK.find((item) => item.id === buildJordanCorridorKey(from, to).replace('__', '-'))
     ?? JORDAN_MOBILITY_NETWORK.find((item) => item.id === DEFAULT_CORRIDOR_ID);
   return route ? buildOpportunity(route, from, to) : null;
 }

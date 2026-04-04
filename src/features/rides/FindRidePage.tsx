@@ -14,6 +14,7 @@ import {
   formatRouteReminderSchedule,
   getRecurringRouteSuggestions,
   getRouteReminders,
+  hydrateRouteReminders,
   syncRouteReminders,
 } from '../../services/movementRetention';
 import { notificationsAPI } from '../../services/notifications.js';
@@ -50,6 +51,11 @@ import { FindRidePackagePanel } from './components/FindRidePackagePanel';
 import { FindRideRideTab } from './components/FindRideRideTab';
 import { FindRideTripDetailModal } from './components/FindRideTripDetailModal';
 import { getFindRideStaticCopy } from './findRideContent';
+import {
+  routeEndpointsAreDistinct,
+  routeMatchesLocationPair,
+  routeTouchesLocation,
+} from '../../utils/jordanLocations';
 
 export function FindRidePage() {
   const nav = useIframeSafeNavigate();
@@ -102,13 +108,13 @@ export function FindRidePage() {
   const searchToCoord = resolveCityCoord(to);
   const connectedRides = getConnectedRides().map(buildRideFromPostedRide);
   const allAvailableRides = [...connectedRides, ...ALL_RIDES];
-  const corridorRides = allAvailableRides.filter((ride) => ride.from === from && ride.to === to);
+  const corridorRides = allAvailableRides.filter((ride) => routeMatchesLocationPair(ride.from, ride.to, from, to, { allowReverse: false }));
   const nearbyCorridors = allAvailableRides
     .filter(
       (ride) =>
         ride.id &&
-        !(ride.from === from && ride.to === to) &&
-        (ride.from === from || ride.to === to || ride.to === from || ride.from === to),
+        !routeMatchesLocationPair(ride.from, ride.to, from, to, { allowReverse: false }) &&
+        (routeTouchesLocation(ride.from, ride.to, from) || routeTouchesLocation(ride.from, ride.to, to)),
     )
     .slice(0, 3);
 
@@ -116,8 +122,8 @@ export function FindRidePage() {
     ? allAvailableRides
         .filter(
           (ride) =>
-            (!from || ride.from.toLowerCase().includes(from.toLowerCase()) || ride.fromAr === from) &&
-            (!to || ride.to.toLowerCase().includes(to.toLowerCase()) || ride.toAr === to) &&
+            (!from || routeMatchesLocationPair(ride.from, ride.to, from, ride.to, { allowReverse: false })) &&
+            (!to || routeMatchesLocationPair(ride.from, ride.to, ride.from, to, { allowReverse: false })) &&
             (!date || ride.date === date),
         )
         .sort((left, right) =>
@@ -178,6 +184,13 @@ export function FindRidePage() {
   }, [routeIntelligence.updatedAt]);
 
   useEffect(() => {
+    if (!user?.id) return;
+    void hydrateRouteReminders(user.id).then((reminders) => {
+      setSavedReminders(reminders);
+    });
+  }, [user?.id, routeIntelligence.updatedAt]);
+
+  useEffect(() => {
     void syncRouteReminders(user ?? undefined).then((delivered) => {
       if (delivered.length > 0) {
         setSavedReminders(getRouteReminders());
@@ -206,7 +219,7 @@ export function FindRidePage() {
   }, [location.search]);
 
   const handleSearch = () => {
-    if (from === to) {
+    if (!routeEndpointsAreDistinct(from, to)) {
       setSearchError(t.chooseDifferentCities);
       setSearched(false);
       return;
@@ -230,7 +243,13 @@ export function FindRidePage() {
         serviceType: 'ride',
         from,
         to,
-        metadata: { date: date || null },
+        metadata: {
+          date: date || null,
+          corridorId: corridorPlan?.id ?? null,
+          demandScore: selectedSignal?.forecastDemandScore ?? corridorPlan?.predictedDemandScore ?? null,
+          priceQuote: selectedPriceQuote,
+          pricePressure: selectedSignal?.pricePressure ?? null,
+        },
       });
     }, 700);
   };
@@ -255,6 +274,10 @@ export function FindRidePage() {
       metadata: {
         rideId: ride.id,
         driverName: ride.driver.name,
+        corridorId: rideSignal?.id ?? null,
+        demandScore: rideSignal?.forecastDemandScore ?? null,
+        pricePressure: rideSignal?.pricePressure ?? null,
+        priceQuote,
       },
     });
   };
@@ -344,7 +367,7 @@ export function FindRidePage() {
     const suggestion = recurringSuggestions.find((item) => item.corridorId === corridorId);
     if (!suggestion) return;
 
-    const reminder = createReminderFromSuggestion(suggestion);
+    const reminder = createReminderFromSuggestion(suggestion, user?.id);
     setSavedReminders(getRouteReminders());
     setRetentionMessage(`Reminder saved for ${reminder.label}. ${formatRouteReminderSchedule(reminder)}.`);
     void trackGrowthEvent({

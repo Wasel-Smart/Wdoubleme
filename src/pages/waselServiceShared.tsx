@@ -37,25 +37,12 @@ export const pill = (color: string) => ({
   color,
 });
 
-const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  Amman: { lat: 31.9539, lng: 35.9106 },
-  Aqaba: { lat: 29.5321, lng: 35.006 },
-  Irbid: { lat: 32.5568, lng: 35.8479 },
-  Zarqa: { lat: 32.0728, lng: 36.088 },
-  'Dead Sea': { lat: 31.559, lng: 35.4732 },
-  Karak: { lat: 31.1854, lng: 35.7048 },
-  Madaba: { lat: 31.7196, lng: 35.7939 },
-  Petra: { lat: 30.3285, lng: 35.4444 },
-  Jerash: { lat: 32.2744, lng: 35.8961 },
-  Mafraq: { lat: 32.3429, lng: 36.208 },
-};
-
 export function resolveCityCoord(city: string) {
-  return CITY_COORDS[city] ?? CITY_COORDS.Amman;
+  return sharedResolveCityCoord(city);
 }
 
 export function midpoint(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  return { lat: (a.lat + b.lat) / 2, lng: (a.lng + b.lng) / 2 };
+  return sharedMidpoint(a, b);
 }
 
 export function Protected({ children }: { children: ReactNode }) {
@@ -277,4 +264,3 @@ export const SharedPrimitives = {
   sharedMidpoint,
   sharedResolveCityCoord,
 };
-

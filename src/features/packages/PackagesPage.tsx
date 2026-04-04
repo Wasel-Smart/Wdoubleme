@@ -25,6 +25,7 @@ import { ServiceFlowPlaybook } from '../shared/ServiceFlowPlaybook';
 import { PackageReturnsPanel } from './components/PackageReturnsPanel';
 import { PackageSendPanel } from './components/PackageSendPanel';
 import { PackageTrackPanel } from './components/PackageTrackPanel';
+import { routeMatchesLocationPair } from '../../utils/jordanLocations';
 
 export function PackagesPage() {
   const nav = useIframeSafeNavigate();
@@ -46,7 +47,7 @@ export function PackagesPage() {
     [pkg.from, pkg.to],
   );
 
-  const matchingRideCount = getConnectedRides().filter((ride) => ride.acceptsPackages && ride.from === pkg.from && ride.to === pkg.to).length;
+  const matchingRideCount = getConnectedRides().filter((ride) => ride.acceptsPackages && routeMatchesLocationPair(ride.from, ride.to, pkg.from, pkg.to, { allowReverse: false })).length;
   const trackedStatusColor = trackedPackage?.status === 'delivered'
     ? DS.green
     : trackedPackage?.status === 'in_transit'

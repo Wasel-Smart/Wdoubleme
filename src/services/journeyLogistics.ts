@@ -2,6 +2,11 @@ import { API_URL, fetchWithRetry, getAuthDetails } from './core';
 import { createDirectPackage, getDirectPackageByTrackingId, updateDirectPackageStatus } from './directSupabase';
 import { trackGrowthEvent } from './growthEngine';
 import { tripsAPI } from './trips';
+import {
+  normalizeJordanLocation,
+  routeEndpointsAreDistinct,
+  routeMatchesLocationPair,
+} from '../utils/jordanLocations';
 
 export interface PostedRide {
   id: string;
@@ -308,7 +313,7 @@ function findBestMatchingRide(rides: PostedRide[], input: { from: string; to: st
   const capacityRank = { small: 1, medium: 5, large: 10 };
 
   return sortByCreatedAtDesc(rides)
-    .filter((ride) => ride.acceptsPackages && ride.from === input.from && ride.to === input.to)
+    .filter((ride) => ride.acceptsPackages && routeMatchesLocationPair(ride.from, ride.to, input.from, input.to, { allowReverse: false }))
     .find((ride) => capacityRank[ride.packageCapacity] >= requestedWeight);
 }
 
@@ -321,6 +326,8 @@ export function getConnectedRides(): PostedRide[] {
 export async function createConnectedRide(input: Omit<PostedRide, 'id' | 'createdAt'>): Promise<PostedRide> {
   const ride: PostedRide = {
     ...input,
+    from: normalizeJordanLocation(input.from, input.from || 'Amman'),
+    to: normalizeJordanLocation(input.to, input.to || 'Aqaba'),
     id: makeId('ride'),
     createdAt: new Date().toISOString(),
     status: input.status ?? 'active',
@@ -328,8 +335,8 @@ export async function createConnectedRide(input: Omit<PostedRide, 'id' | 'create
 
   try {
     const server = await tripsAPI.createTrip({
-      from: input.from,
-      to: input.to,
+      from: ride.from,
+      to: ride.to,
       date: input.date,
       time: input.time,
       seats: input.seats,
@@ -419,15 +426,15 @@ export async function createConnectedPackage(input: {
   recipientName?: string;
   recipientPhone?: string;
 }): Promise<PackageRequest> {
-  const from = input.from.trim();
-  const to = input.to.trim();
+  const from = normalizeJordanLocation(input.from, input.from.trim() || 'Amman');
+  const to = normalizeJordanLocation(input.to, input.to.trim() || 'Aqaba');
 
   if (!from || !to) {
-    throw new Error('Sender and receiver cities are required.');
+    throw new Error('Sender and receiver locations are required.');
   }
 
-  if (from === to) {
-    throw new Error('Sender and receiver cities must be different.');
+  if (!routeEndpointsAreDistinct(from, to)) {
+    throw new Error('Sender and receiver locations must be different.');
   }
 
   const rides = getConnectedRides();

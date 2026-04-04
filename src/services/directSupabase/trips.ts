@@ -18,6 +18,10 @@ import { recordDirectGrowthEvent } from './growth';
 import { processReferralConversionForPassenger } from './referrals';
 import type { DriverRow, RawBooking, RawProfile, TripRow, UserContext, UserRow, WalletRow } from './types';
 import type { TripCreatePayload, TripSearchResult, TripUpdatePayload } from '../trips';
+import {
+  normalizeJordanLocation,
+  routeMatchesLocationPair,
+} from '../../utils/jordanLocations';
 
 async function getTripCountForDriver(driverId?: string | null): Promise<number> {
   if (!driverId) return 0;
@@ -129,16 +133,21 @@ export async function searchDirectTrips(from?: string, to?: string, date?: strin
     .select('trip_id, driver_id, origin_city, destination_city, departure_time, available_seats, price_per_seat, trip_status, allow_packages, package_capacity, vehicle_make, vehicle_model, notes, created_at')
     .is('deleted_at', null);
 
-  if (from) query = query.ilike('origin_city', `%${from}%`);
-  if (to) query = query.ilike('destination_city', `%${to}%`);
   if (date) query = query.gte('departure_time', `${date}T00:00:00`).lt('departure_time', `${date}T23:59:59.999`);
   if (seats) query = query.gte('available_seats', seats);
-  query = query.in('trip_status', ['open', 'booked', 'in_progress']).order('departure_time');
+  query = query.in('trip_status', ['open', 'booked', 'in_progress']).order('departure_time').limit(200);
 
   const { data, error } = await query;
   if (error) throw error;
 
-  const rows = (Array.isArray(data) ? data : []) as TripRow[];
+  const rows = ((Array.isArray(data) ? data : []) as TripRow[]).filter((row) => {
+    const origin = normalizeJordanLocation(String(row.origin_city ?? ''), String(row.origin_city ?? 'Amman'));
+    const destination = normalizeJordanLocation(String(row.destination_city ?? ''), String(row.destination_city ?? 'Aqaba'));
+    if (from && to) return routeMatchesLocationPair(origin, destination, from, to, { allowReverse: false });
+    if (from) return routeMatchesLocationPair(origin, destination, from, destination, { allowReverse: false });
+    if (to) return routeMatchesLocationPair(origin, destination, origin, to, { allowReverse: false });
+    return true;
+  });
   const profiles = await fetchProfilesByDriverIds(rows.map((r) => String(r.driver_id ?? '')));
   return rows.map((row) => mapTripRow(row, profiles[String(row.driver_id ?? '')] ?? null));
 }
@@ -183,8 +192,8 @@ export async function createDirectTrip(userId: string, tripData: TripCreatePaylo
     .from('trips')
     .insert({
       driver_id: driver.driver_id,
-      origin_city: tripData.from,
-      destination_city: tripData.to,
+      origin_city: normalizeJordanLocation(tripData.from, tripData.from),
+      destination_city: normalizeJordanLocation(tripData.to, tripData.to),
       departure_time: departureTime,
       available_seats: tripData.seats,
       price_per_seat: tripData.price,
@@ -206,8 +215,8 @@ export async function updateDirectTrip(tripId: string, updates: TripUpdatePayloa
   const db = getDb();
   const payload: Record<string, unknown> = {};
 
-  if (updates.from) payload.origin_city = updates.from;
-  if (updates.to) payload.destination_city = updates.to;
+  if (updates.from) payload.origin_city = normalizeJordanLocation(updates.from, updates.from);
+  if (updates.to) payload.destination_city = normalizeJordanLocation(updates.to, updates.to);
   if (updates.date || updates.time) {
     const current = await getDirectTripById(tripId);
     const date = updates.date ?? current?.date ?? new Date().toISOString().slice(0, 10);
